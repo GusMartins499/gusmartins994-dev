@@ -8,6 +8,8 @@ export type Social = {
 
 export const site = {
   name: "gustavo martins",
+  // handle curto usado no logo do header (~/handle)
+  handle: "gusmartins",
   role: "full-stack developer",
   // Descrição bem breve (2–3 linhas). Aparece no hero.
   about: [

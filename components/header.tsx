@@ -16,7 +16,7 @@ export function Header() {
           className="shrink-0 text-sm font-medium text-base-content hover:text-primary sm:text-base"
         >
           <span className="text-primary">~/</span>
-          {site.name.replace(/\s+/g, "")}
+          {site.handle}
         </Link>
         <nav
           aria-label="Navegação principal"
