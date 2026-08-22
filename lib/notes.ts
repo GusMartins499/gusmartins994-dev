@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import matter from "gray-matter";
+import { bcp47, type Locale } from "@/i18n/config";
 
 // Camada de leitura do mini-blog. Cada arquivo em content/notes/*.mdx
 // é um post público. Sem flags: se o arquivo existe, o post está no ar.
@@ -68,10 +69,10 @@ export function getNote(slug: string): Note | null {
   };
 }
 
-export function formatDate(iso: string): string {
+export function formatDate(iso: string, locale: Locale = "pt"): string {
   if (!iso) return "";
   const d = new Date(iso + "T00:00:00");
-  return d.toLocaleDateString("pt-BR", {
+  return d.toLocaleDateString(bcp47[locale], {
     day: "2-digit",
     month: "short",
     year: "numeric",

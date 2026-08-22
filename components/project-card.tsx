@@ -1,12 +1,21 @@
 import type { Project } from "@/content/projects";
+import type { Locale } from "@/i18n/config";
 
-export function ProjectCard({ project }: { project: Project }) {
+export function ProjectCard({
+  project,
+  locale,
+  openLabel,
+}: {
+  project: Project;
+  locale: Locale;
+  openLabel: string;
+}) {
   return (
     <a
       href={project.repo}
       target="_blank"
       rel="noopener noreferrer"
-      aria-label={`${project.name} — abrir repositório no GitHub (nova aba)`}
+      aria-label={`${project.name} — ${openLabel}`}
       className="group block rounded-box border border-base-300 bg-base-200 p-5 transition-all duration-200 hover:-translate-y-1 hover:border-primary hover:shadow-lg hover:shadow-primary/10 focus-visible:border-primary"
     >
       <div className="mb-2 flex items-center justify-between gap-3">
@@ -18,7 +27,7 @@ export function ProjectCard({ project }: { project: Project }) {
         </h3>
         <ExternalIcon />
       </div>
-      <p className="mb-4 text-sm text-muted">{project.description}</p>
+      <p className="mb-4 text-sm text-muted">{project.description[locale]}</p>
       <ul className="flex flex-wrap gap-1.5">
         {project.stack.map((tech) => (
           <li
