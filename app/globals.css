@@ -95,6 +95,12 @@ html {
     monospace;
 }
 
+/* Rede de segurança: nunca permitir scroll horizontal (clip preserva o scroll vertical) */
+html,
+body {
+  overflow-x: clip;
+}
+
 /* a11y: foco sempre visível e consistente */
 :focus-visible {
   outline: 2px solid var(--color-primary);
