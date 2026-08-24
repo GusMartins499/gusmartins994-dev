@@ -4,7 +4,13 @@ import { useEffect, useState } from "react";
 
 type Theme = "dark" | "light";
 
-export function ThemeToggle() {
+export function ThemeToggle({
+  toLightLabel,
+  toDarkLabel,
+}: {
+  toLightLabel: string;
+  toDarkLabel: string;
+}) {
   const [theme, setTheme] = useState<Theme>("dark");
   const [mounted, setMounted] = useState(false);
 
@@ -26,15 +32,15 @@ export function ThemeToggle() {
     }
   }
 
-  const nextLabel = theme === "dark" ? "claro" : "escuro";
+  const label = theme === "dark" ? toLightLabel : toDarkLabel;
 
   return (
     <button
       type="button"
       onClick={toggle}
       className="btn btn-ghost btn-sm btn-square"
-      aria-label={`Mudar para o tema ${nextLabel}`}
-      title={`Tema ${nextLabel}`}
+      aria-label={label}
+      title={label}
     >
       {/* Evita mismatch de hidratação: só mostra o ícone após montar */}
       {mounted && theme === "dark" ? <SunIcon /> : null}

@@ -1,0 +1,29 @@
+export const pt = {
+  nav: { projects: "projetos", notes: "notes" },
+  sections: { stack: "skills & stack", projects: "projetos", notes: "notes" },
+  common: { seeAll: "ver todos", backToNotes: "notes" },
+  a11y: {
+    skip: "Pular para o conteúdo",
+    themeToLight: "Mudar para o tema claro",
+    themeToDark: "Mudar para o tema escuro",
+    language: "Mudar idioma",
+    openRepo: "abrir repositório no GitHub (nova aba)",
+  },
+  projects: {
+    title: "projetos",
+    subtitle: "Cada card abre o repositório no GitHub em nova aba.",
+  },
+  notes: {
+    title: "notes",
+    subtitle: "Um canto pra escrever sobre o que ando aprendendo.",
+    empty: "Nada por aqui ainda.",
+    ptBadge: "em português",
+  },
+  footer: {
+    contact: "contato",
+    builtWith: "feito com next.js, tailwind e daisyui.",
+  },
+  meta: { portfolioOf: "Portfólio de" },
+};
+
+export type Dictionary = typeof pt;
