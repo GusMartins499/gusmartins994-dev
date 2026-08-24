@@ -1,5 +1,6 @@
 import type { MDXComponents } from "mdx/types";
 import Link from "next/link";
+import { Fig } from "@/components/fig";
 
 // Componentes usados para renderizar o markdown dos notes, já estilizados
 // com a paleta e a JetBrains Mono. Hierarquia de headings começa em h2
@@ -61,4 +62,6 @@ export const mdxComponents: MDXComponents = {
     />
   ),
   hr: () => <hr className="my-8 border-base-300" />,
+  // Componente pra imagens otimizadas (next/image) usado direto no MDX.
+  Fig,
 };

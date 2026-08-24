@@ -18,7 +18,8 @@ export const pt = {
   },
   notes: {
     title: "notes",
-    subtitle: "Um canto pra escrever sobre o que ando aprendendo.",
+    subtitle:
+      "Um canto pra escrever sobre o que ando aprendendo e alguns problemas reais que já resolvi",
     empty: "Nada por aqui ainda.",
     ptBadge: "em português",
   },

@@ -1,0 +1,63 @@
+---
+title: Meu primeiro projeto em produção com async-jobs
+description: Automatizando geração de imagens e publicando no Instagram
+date: 2026-06-15
+tags: [typescript, next.js, cloudflare, queue, IG API]
+---
+
+Recentemente construí um web-app para automatizar as publicações no Instagram do Centro Espírita Caminho da Verdade, casa que eu frequento. Tudo começou com uma dor.
+
+Precisávamos movimentar a conta do CE no Instagram, e surgiu a ideia de publicar semanalmente as próximas palestras, além de uma arte poucas horas antes de cada palestra informando quem é o palestrante e qual o tema. O problema era operacional: a publicação precisava sair no horário certo, dependia de uma foto do palestrante e de alguém com acesso ao Instagram para postar.
+
+Poucas pessoas na casa têm facilidade com redes sociais, então esse trabalho acabou sobrando para minha esposa. Só que não era ela quem agendava as palestras e, na maioria das vezes, ela não tinha a foto do palestrante, e ela precisava pedir para outra pessoa. Isso criava uma dependência que não era dela, muitas vezes a publicação não saía, e em outras saía já em cima da hora da palestra.
+
+Foi aí que pensei em automatizar o processo de ponta a ponta: um site institucional do centro espírita e um painel administrativo onde se cadastram palestrantes e palestras. A cada palestra cadastrada, a arte para o Instagram é gerada e a publicação é agendada automaticamente. Assim, ninguém precisa abrir um editor de imagem nem lembrar de postar na hora certa.
+
+## Arquitetura
+
+Comecei a desenhar a arquitetura com dois objetivos: manter as coisas simples e evitar ao máximo qualquer custo para o CE. Foi então que escolhi a Cloudflare como base do projeto o free tier é generoso e vem com um conjunto de ferramentas que cobre quase tudo que eu precisava.
+
+Da Cloudflare eu uso:
+
+- **D1:** banco de dados relacional serverless (SQLite), onde ficam palestras e palestrantes.
+- **Workers:** onde roda toda a lógica de backend.
+- **Queues:** para o processamento assíncrono (mais sobre isso abaixo).
+- **R2:** armazenamento de objetos, com um bucket para a foto do palestrante e outro para o card (a arte gerada).
+
+A renderização do card em si acontece no Vercel, usando next/og. O Worker tem um limite baixo de CPU no plano gratuito, e desenhar a imagem estouraria esse limite, então o Worker delega essa etapa, ele chama o Vercel, recebe o PNG pronto e salva no R2.
+
+## Filas
+
+O coração do projeto são três filas:
+
+- **Geração do card:** ao cadastrar ou editar uma palestra (ou trocar a foto do palestrante), um job é enfileirado. O Worker consome esse job, pede a renderização da arte e salva o PNG no R2. A operação é idempotente, o card é gravado com o ID da palestra como chave, então regenerar simplesmente sobrescreve.
+- **Notificação por e-mail:** depois que o card é salvo, um segundo job dispara um e-mail para os administradores com um link de acesso direto ao card no R2 (válido por 7 dias). É a conferência visual antes de qualquer publicação.
+- **Dead-letter queue (DLQ):** se qualquer etapa falhar após três tentativas, o job cai na DLQ, que me envia um alerta por e-mail. Nada some "do nada".
+
+Separar geração e notificação em filas diferentes traz segurança. Se o card foi gerado, mas o envio do e-mail falha, apenas o envio é repetido, sem re-renderizar a imagem.
+
+## Publicação no Instagram
+
+As palestras acontecem sempre às segundas-feiras, às 20h. Para publicar no horário certo, uso os scheduled handlers (cron) do Cloudflare Workers. O Worker acorda no momento programado, busca no D1 as informações da próxima palestra e o card correspondente no R2, e publica na conta do Instagram do CE por meio da API.
+
+São dois tipos de publicação: o post semanal com as próximas palestras e a arte que sai horas antes de cada palestra, com o palestrante e o tema. A legenda é montada a partir de um template fixo, que só interpola o nome do palestrante e o assunto, as hashtags e o endereço da casa são hardcoded.
+
+E vale uma observação: a API do Instagram não tem custo. Você só precisa atender a alguns pré-requisitos e começar a utilizar.
+
+## Observabilidade
+
+Para enxergar o que acontece em produção, o projeto usa OpenTelemetry junto com o Honeycomb, outra ferramenta com free tier generoso. Cada card vira um trace completo, do cadastro até a publicação, e eu recebo um e-mail sempre que uma falha crítica acontece.
+
+## E-mail
+
+Para os envios, uso o Resend, que libera 100 e-mails por dia no plano gratuito, isso é muito mais do que esse projeto precisa.
+
+## Custo
+
+No fim, meu único custo para manter o web-app em produção foi R$ 40,00, o preço do domínio por um ano. E isso ainda pode ficar mais barato se a renovação for feita por 2, 3 ou 5 anos.
+
+## Conclusão
+
+Dá para colocar uma aplicação real em produção usando a Cloudflare como base, quase sem custo. O free tier é bem generoso, e, somando ferramentas open source como o OpenTelemetry, você cobre praticamente tudo: banco, backend, filas, armazenamento e observabilidade.
+
+Foi meu primeiro projeto em produção com processamento assíncrono, e o que mais me marcou foi perceber como uma dor simples do dia a dia pode virar um sistema inteiro, e é isso que me motiva a construir soluções que tenham impacto positivo na vida das pessoas, porque, no final, não é somente código.

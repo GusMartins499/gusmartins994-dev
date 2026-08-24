@@ -15,7 +15,6 @@ export function LangToggle({
 
   function switchTo(target: Locale) {
     if (target === current) return;
-    // troca só o segmento de locale, mantendo o resto do caminho
     const segments = pathname.split("/");
     segments[1] = target;
     const nextPath = segments.join("/") || `/${target}`;
@@ -42,7 +41,7 @@ export function LangToggle({
             onClick={() => switchTo(loc)}
             aria-current={active ? "true" : undefined}
             className={[
-              "px-1.5 py-1 uppercase",
+              "cursor-pointer px-1.5 py-1 uppercase",
               i === 0 ? "rounded-l-field" : "rounded-r-field",
               active
                 ? "bg-primary font-medium text-primary-content"

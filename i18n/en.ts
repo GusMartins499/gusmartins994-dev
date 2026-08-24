@@ -20,7 +20,8 @@ export const en: Dictionary = {
   },
   notes: {
     title: "notes",
-    subtitle: "A corner to write about what I'm learning.",
+    subtitle:
+      "A corner to write about what I'm learning and some real problems solved",
     empty: "Nothing here yet.",
     ptBadge: "in portuguese",
   },

@@ -50,14 +50,14 @@ export const stack: { group: Localized; items: string[] }[] = [
   },
   {
     group: { pt: "frontend", en: "frontend" },
-    items: ["React", "Next.js", "Tailwind"],
+    items: ["React", "Next.js", "Tailwind", "Svelte", "A11y"],
   },
   {
     group: { pt: "backend", en: "backend" },
-    items: ["Node.js", "Nest.js", "Postgresql", "Mongodb"],
+    items: ["Node.js", "Nest.js", "Postgresql", "Mongodb", "BullMQ", "Redis"],
   },
   {
     group: { pt: "ferramentas", en: "tools" },
-    items: ["Git", "Docker", "Vercel", "Figma"],
+    items: ["Git", "Docker", "Vercel", "Figma", "Claude code", "Linux"],
   },
 ];
