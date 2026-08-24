@@ -40,7 +40,10 @@ export default async function Home({
           >
             {site.name}
           </span>
-          <span className="terminal-cursor ml-0.5 text-primary" aria-hidden="true" />
+          <span
+            className="terminal-cursor ml-0.5 text-primary"
+            aria-hidden="true"
+          />
         </h1>
         <p className="mt-4 text-lg text-primary">// {site.role[l]}</p>
         <div className="mt-6 max-w-xl space-y-1 leading-relaxed text-muted">
@@ -80,7 +83,9 @@ export default async function Home({
       {/* Projetos em destaque */}
       <section aria-labelledby="projetos">
         <div className="mb-5 flex items-baseline justify-between">
-          <SectionHeading id="projetos">{dict.sections.projects}</SectionHeading>
+          <SectionHeading id="projetos">
+            {dict.sections.projects}
+          </SectionHeading>
           <Link
             href={`/${l}/projects`}
             className="group text-sm text-muted hover:text-primary"

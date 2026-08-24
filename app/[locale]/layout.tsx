@@ -8,6 +8,7 @@ import { getDictionary } from "@/i18n/dictionaries";
 import { ThemeScript } from "@/components/theme-script";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
+import { FloatingNav } from "@/components/floating-nav";
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
@@ -50,7 +51,10 @@ export async function generateMetadata({
 export default async function LocaleLayout({
   children,
   params,
-}: Readonly<{ children: React.ReactNode; params: Promise<{ locale: string }> }>) {
+}: Readonly<{
+  children: React.ReactNode;
+  params: Promise<{ locale: string }>;
+}>) {
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
   const typedLocale: Locale = locale;
@@ -74,6 +78,11 @@ export default async function LocaleLayout({
           {children}
         </main>
         <Footer dict={dict} />
+        <FloatingNav
+          locale={typedLocale}
+          backHomeLabel={dict.a11y.backHome}
+          scrollTopLabel={dict.a11y.scrollTop}
+        />
       </body>
     </html>
   );

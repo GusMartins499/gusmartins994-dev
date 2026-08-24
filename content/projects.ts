@@ -1,15 +1,11 @@
-// Projetos do portfólio. Para adicionar um novo, copie um objeto e edite.
-// Todo card abre o repositório no GitHub em nova aba (target="_blank").
-// Só a `description` é bilíngue; nome, stack e repo são neutros.
-
 import type { Locale } from "@/i18n/config";
 
 export type Project = {
   name: string;
   description: Record<Locale, string>;
   stack: string[];
-  repo: string; // URL do GitHub — o card leva pra cá
-  featured?: boolean; // aparece em destaque na home
+  repo: string;
+  featured?: boolean;
 };
 
 export const projects: Project[] = [

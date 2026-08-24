@@ -1,13 +1,16 @@
 export const pt = {
   nav: { projects: "projetos", notes: "notes" },
   sections: { stack: "skills & stack", projects: "projetos", notes: "notes" },
-  common: { seeAll: "ver todos", backToNotes: "notes" },
+  common: { seeAll: "ver todos" },
   a11y: {
     skip: "Pular para o conteúdo",
     themeToLight: "Mudar para o tema claro",
     themeToDark: "Mudar para o tema escuro",
     language: "Mudar idioma",
     openRepo: "abrir repositório no GitHub (nova aba)",
+    backHome: "voltar para a home",
+    scrollTop: "voltar ao topo",
+    upDir: "voltar um nível",
   },
   projects: {
     title: "projetos",
@@ -21,7 +24,6 @@ export const pt = {
   },
   footer: {
     contact: "contato",
-    builtWith: "feito com next.js, tailwind e daisyui.",
   },
   meta: { portfolioOf: "Portfólio de" },
 };

@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import { getAllNotes, getNote, formatDate } from "@/lib/notes";
 import { locales, isLocale, type Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 import { mdxComponents } from "@/components/mdx";
+import { CdUp } from "@/components/cd-up";
 
 export function generateStaticParams() {
   const notes = getAllNotes();
@@ -25,7 +25,6 @@ export async function generateMetadata({
   return {
     title: note.title,
     description: note.description,
-    // O conteúdo é sempre PT — canonical aponta pra versão /pt.
     alternates: { canonical: `/pt/notes/${slug}` },
   };
 }
@@ -44,15 +43,15 @@ export default async function NotePage({
 
   return (
     <article className="mx-auto max-w-2xl">
-      <Link href={`/${l}/notes`} className="text-sm text-muted hover:text-primary">
-        ← {dict.common.backToNotes}
-      </Link>
-
+      <CdUp />
       <div className="mt-6 mb-8 border-b border-base-300 pb-6">
         <h1 className="mb-2 text-2xl font-medium text-base-content">
           {note.title}
         </h1>
         <div className="flex flex-wrap items-center gap-3 text-sm text-faint">
+          <span className="text-success" title="read-only">
+            -r--r--r--
+          </span>
           <time dateTime={note.date} className="tabular-nums">
             {formatDate(note.date, l)}
           </time>

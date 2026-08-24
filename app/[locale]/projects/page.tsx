@@ -5,6 +5,7 @@ import { isLocale, type Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 import { SectionHeading } from "@/components/section";
 import { ProjectCard } from "@/components/project-card";
+import { CdUp } from "@/components/cd-up";
 
 export async function generateMetadata({
   params,
@@ -29,6 +30,9 @@ export default async function ProjectsPage({
 
   return (
     <div>
+      <div className="mb-6">
+        <CdUp href={`/${l}`} label={dict.a11y.upDir} />
+      </div>
       <SectionHeading as="h1">{dict.projects.title}</SectionHeading>
       <p className="mb-8 text-muted">{dict.projects.subtitle}</p>
       <div className="grid grid-cols-1 gap-4">

@@ -5,6 +5,7 @@ import { isLocale, type Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 import { SectionHeading } from "@/components/section";
 import { NoteCard } from "@/components/note-card";
+import { CdUp } from "@/components/cd-up";
 
 export async function generateMetadata({
   params,
@@ -30,6 +31,9 @@ export default async function NotesPage({
 
   return (
     <div>
+      <div className="mb-6">
+        <CdUp />
+      </div>
       <SectionHeading as="h1">{dict.notes.title}</SectionHeading>
       <p className="mb-8 text-muted">{dict.notes.subtitle}</p>
       {notes.length === 0 ? (
