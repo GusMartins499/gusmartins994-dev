@@ -31,7 +31,7 @@ export default async function ProjectsPage({
   return (
     <div>
       <div className="mb-6">
-        <CdUp href={`/${l}`} label={dict.a11y.upDir} />
+        <CdUp />
       </div>
       <SectionHeading as="h1">{dict.projects.title}</SectionHeading>
       <p className="mb-8 text-muted">{dict.projects.subtitle}</p>
