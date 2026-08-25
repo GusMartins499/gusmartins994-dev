@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getAllNotes } from "@/lib/notes";
+import { site } from "@/lib/site";
 import { isLocale, type Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 import { SectionHeading } from "@/components/section";
@@ -15,7 +16,24 @@ export async function generateMetadata({
   const { locale } = await params;
   if (!isLocale(locale)) return {};
   const dict = getDictionary(locale);
-  return { title: dict.notes.title };
+  return {
+    title: dict.notes.title,
+    description: dict.notes.subtitle,
+    alternates: {
+      canonical: `/${locale}/notes`,
+      languages: {
+        "pt-BR": "/pt/notes",
+        "en-US": "/en/notes",
+        "x-default": "/pt/notes",
+      },
+    },
+    openGraph: {
+      title: dict.notes.title,
+      description: dict.notes.subtitle,
+      url: `${site.url}/${locale}/notes`,
+      type: "website",
+    },
+  };
 }
 
 export default async function NotesPage({
