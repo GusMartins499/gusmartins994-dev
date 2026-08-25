@@ -85,7 +85,7 @@ export default async function NotePage({
   };
 
   return (
-    <article className="mx-auto max-w-2xl">
+    <article className="mx-auto max-w-2xl text-justify">
       <JsonLd data={articleLd} />
       <CdUp />
       <div className="mt-6 mb-8 border-b border-base-300 pb-6">
