@@ -10,33 +10,34 @@ export type Project = {
 
 export const projects: Project[] = [
   {
-    name: "terminal-portfolio",
+    name: "woovi-challenge",
     description: {
-      pt: "Este portfólio: estética de terminal, tema claro/escuro e conteúdo em MDX.",
-      en: "This portfolio: terminal aesthetic, light/dark theme and MDX content.",
+      pt: "API para gerar relatórios com grande volume de dados",
+      en: "API to generate reports that can handle many data",
     },
-    stack: ["next.js", "typescript", "tailwind", "daisyui"],
-    repo: "https://github.com/gusmartins/terminal-portfolio",
+    stack: ["node.js", "typescript", "streams", "mongodb", "docker"],
+    repo: "https://github.com/GusMartins499/woovi-challenge",
     featured: true,
   },
   {
-    name: "api-catalog",
+    name: "delivery-tracking",
     description: {
-      pt: "API REST de catálogo com autenticação, paginação e testes de integração.",
-      en: "Catalog REST API with authentication, pagination and integration tests.",
+      pt: 'Utilizando SSE para simular um "iFood"',
+      en: 'Using SSE to simulate the "iFood" app',
     },
-    stack: ["node.js", "postgres", "docker"],
-    repo: "https://github.com/gusmartins/api-catalog",
+    stack: ["javascript", "node.js", "redis", "react", "docker"],
+    repo: "https://github.com/GusMartins499/delivery-tracking",
     featured: true,
   },
   {
-    name: "cli-notes",
+    name: "tech-calendar-brazil",
     description: {
-      pt: "Pequena CLI para anotações rápidas direto do terminal.",
-      en: "Tiny CLI for quick notes straight from the terminal.",
+      pt: "Calendário de eventos tech do Brasil na sua agenda Google",
+      en: "Brazilian tech events calendar for your Google Calendar",
     },
-    stack: ["typescript", "node.js"],
-    repo: "https://github.com/gusmartins/cli-notes",
+    stack: ["typescript", "next.js", "docker", "k8s", "Google APIs"],
+    repo: "https://github.com/GusMartins499/tech-calendar-brazil",
+    featured: true,
   },
 ];
 

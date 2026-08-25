@@ -3,7 +3,6 @@ import type { Locale } from "@/i18n/config";
 export type Social = {
   label: string;
   href: string;
-  handle: string;
 };
 
 type Localized = Record<Locale, string>;
@@ -33,14 +32,12 @@ export const socials: Social[] = [
   {
     label: "GitHub",
     href: "https://github.com/GusMartins499",
-    handle: "@gusmartins",
   },
   {
     label: "LinkedIn",
     href: "https://linkedin.com/in/gustavo-martins994",
-    handle: "gustavo martins",
   },
-  { label: "Email", href: `mailto:${site.email}`, handle: site.email },
+  { label: "Email", href: `mailto:${site.email}` },
 ];
 
 export const stack: { group: Localized; items: string[] }[] = [
