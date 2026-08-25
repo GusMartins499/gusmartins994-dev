@@ -1,0 +1,8 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="gusmartins">
+  <!-- fundo rubro-negro (base-100 do tema escuro) -->
+  <rect width="32" height="32" rx="7" fill="#0f0c0c"/>
+  <!-- prompt de terminal: chevron vermelho (primary) -->
+  <path d="M8.5 10 L14.5 16 L8.5 22" stroke="#ef4136" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- cursor: bloco âmbar (secondary) -->
+  <rect x="16.8" y="19" width="7.5" height="3.2" rx="1.2" fill="#ffb000"/>
+</svg>
