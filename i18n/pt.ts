@@ -21,7 +21,6 @@ export const pt = {
     subtitle:
       "Um canto pra escrever sobre o que ando aprendendo e alguns problemas reais que já resolvi",
     empty: "Nada por aqui ainda.",
-    ptBadge: "em português",
   },
   footer: {
     contact: "contato",

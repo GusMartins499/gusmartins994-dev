@@ -23,7 +23,6 @@ export const en: Dictionary = {
     subtitle:
       "A corner to write about what I'm learning and some real problems solved",
     empty: "Nothing here yet.",
-    ptBadge: "in portuguese",
   },
   footer: {
     contact: "contact",

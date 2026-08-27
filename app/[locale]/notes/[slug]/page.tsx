@@ -106,11 +106,6 @@ export default async function NotePage({
               ))}
             </span>
           )}
-          {l === "en" && (
-            <span className="rounded-field bg-accent-soft px-2 py-0.5 text-xs text-primary">
-              {dict.notes.ptBadge}
-            </span>
-          )}
         </div>
       </div>
 
