@@ -160,3 +160,31 @@ body {
   transition: top 0.15s ease;
 }
 .skip-link:focus { top: 0.5rem; }
+
+/* ── Fundo global: grade graph-paper ────────────────────────────────── */
+[data-theme="dark"] {
+  --grid: rgba(236, 231, 223, 0.045);
+}
+[data-theme="light"] {
+  --grid: rgba(26, 26, 26, 0.045);
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    linear-gradient(var(--grid) 1px, transparent 1px) 0 0 / 32px 32px,
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0 / 32px 32px;
+  /* esmaece as bordas p/ não brigar com o conteúdo */
+  -webkit-mask-image: radial-gradient(120% 100% at 50% 0%, #000 55%, transparent 100%);
+          mask-image: radial-gradient(120% 100% at 50% 0%, #000 55%, transparent 100%);
+}
+
+/* body precisa formar um stacking context, senão o ::before (z-index:-1)
+   é pintado atrás do fundo opaco do próprio body e some. */
+body {
+  position: relative;
+  isolation: isolate;
+}
