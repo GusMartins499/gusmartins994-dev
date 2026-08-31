@@ -40,6 +40,14 @@ export function Header({
               {item.label}
             </Link>
           ))}
+          <a
+            href={`/cv/${locale}`}
+            target="_blank"
+            rel="noopener"
+            className="rounded-field px-2 py-1.5 text-sm text-muted hover:bg-base-200 hover:text-base-content sm:px-3"
+          >
+            {dict.nav.resume}
+          </a>
           <LangToggle current={locale} label={dict.a11y.language} />
           <ThemeToggle
             toLightLabel={dict.a11y.themeToLight}

@@ -1,7 +1,7 @@
 import type { Dictionary } from "./pt";
 
 export const en: Dictionary = {
-  nav: { projects: "projects", notes: "notes" },
+  nav: { projects: "projects", notes: "notes", resume: "resume" },
   sections: { stack: "skills & stack", projects: "projects", notes: "notes" },
   common: { seeAll: "see all" },
   a11y: {

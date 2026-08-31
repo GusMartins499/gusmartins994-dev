@@ -1,5 +1,5 @@
 export const pt = {
-  nav: { projects: "projetos", notes: "notes" },
+  nav: { projects: "projetos", notes: "notes", resume: "currículo" },
   sections: { stack: "skills & stack", projects: "projetos", notes: "notes" },
   common: { seeAll: "ver todos" },
   a11y: {
