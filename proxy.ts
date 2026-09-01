@@ -34,6 +34,6 @@ export function proxy(req: NextRequest) {
 }
 
 export const config = {
-  // ignora _next, api e arquivos com extensão (favicon.ico, imagens, etc.)
-  matcher: ["/((?!_next|api|.*\\..*).*)"],
+  // ignora _next, api, /cv (rewrite do PDF) e arquivos com extensão (favicon.ico, imagens, etc.)
+  matcher: ["/((?!_next|api|cv|.*\\..*).*)"],
 };
