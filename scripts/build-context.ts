@@ -17,6 +17,7 @@
  */
 import fs from "node:fs";
 import path from "node:path";
+import crypto from "node:crypto";
 import { getAllNotes, getNote } from "../lib/notes";
 import { site, stack } from "../lib/site";
 import { projects } from "../content/projects";
@@ -136,6 +137,35 @@ function estimateTokens(text: string): number {
   return Math.ceil(text.length / 4);
 }
 
+const CACHE = path.join(process.cwd(), "lib", "chat", "embeddings-cache.json");
+
+/**
+ * Cache de embeddings, versionado no repositório.
+ *
+ * Dois motivos, e o segundo é o que importa:
+ *
+ *  1. Build mais rápido — não reembeda o que não mudou.
+ *  2. O free tier do Gemini limita embeddings a 100 REQUISIÇÕES POR MINUTO.
+ *     Cada build gasta uma por chunk (hoje 52, entre pt e en). Sem cache,
+ *     dois deploys no mesmo minuto estouram a cota e derrubam o build.
+ *     Com cache, um deploy que não mexeu no conteúdo gasta ZERO.
+ *
+ * A chave é o hash do texto do chunk: mexeu no conteúdo, reembeda só ele.
+ */
+type Cache = Record<string, number[]>;
+
+function loadCache(): Cache {
+  try {
+    return JSON.parse(fs.readFileSync(CACHE, "utf8")) as Cache;
+  } catch {
+    return {};
+  }
+}
+
+function cacheKey(text: string): string {
+  return crypto.createHash("sha256").update(text).digest("hex").slice(0, 16);
+}
+
 const EMBED_MODEL = "gemini-embedding-001";
 const EMBED_DIMS = 768;
 const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
@@ -146,33 +176,71 @@ function normalize(vector: number[]): number[] {
   return norm === 0 ? vector : vector.map((v) => v / norm);
 }
 
-async function embedChunks(chunks: Chunk[]): Promise<number[][] | null> {
-  if (!apiKey) return null;
+async function embedChunks(
+  chunks: Chunk[],
+  cache: Cache,
+): Promise<{ embeddings: number[][] | null; fetched: number }> {
+  const keys = chunks.map((c) => cacheKey(c.text));
+  const missing = chunks.filter((_, i) => !cache[keys[i]]);
+
+  if (missing.length === 0) {
+    return { embeddings: keys.map((k) => cache[k]), fetched: 0 };
+  }
+  if (!apiKey) return { embeddings: null, fetched: 0 };
+
   const google = createGoogle({ apiKey });
-  const { embeddings } = await embedMany({
-    model: google.textEmbeddingModel(EMBED_MODEL),
-    values: chunks.map((c) => c.text),
-    providerOptions: {
-      google: {
-        // equivalente ao prefixo `passage:` do e5: diz ao modelo que isto é
-        // documento indexado, não pergunta. A query usa RETRIEVAL_QUERY.
-        taskType: "RETRIEVAL_DOCUMENT",
-        outputDimensionality: EMBED_DIMS,
+
+  // Lotes de 50 para ficar sob o teto de 100 req/min do free tier.
+  const BATCH = 50;
+  for (let i = 0; i < missing.length; i += BATCH) {
+    const slice = missing.slice(i, i + BATCH);
+    const { embeddings } = await embedMany({
+      model: google.textEmbeddingModel(EMBED_MODEL),
+      values: slice.map((c) => c.text),
+      providerOptions: {
+        google: {
+          // equivalente ao prefixo `passage:` do e5: diz ao modelo que isto é
+          // documento indexado, não pergunta. A query usa RETRIEVAL_QUERY.
+          taskType: "RETRIEVAL_DOCUMENT",
+          outputDimensionality: EMBED_DIMS,
+        },
       },
-    },
-  });
-  return embeddings.map(normalize);
+    });
+    slice.forEach((c, j) => {
+      cache[cacheKey(c.text)] = normalize(embeddings[j]).map((v) =>
+        Number(v.toFixed(6)),
+      );
+    });
+  }
+
+  return { embeddings: keys.map((k) => cache[k]), fetched: missing.length };
 }
 
 async function main() {
+  const cache = loadCache();
   const entries = [];
+  let totalFetched = 0;
 
   for (const locale of locales) {
     const text = buildFor(locale);
     const chunks = sectionsFor(locale).flatMap((s) =>
       chunkSection(s.heading, s.body),
     );
-    const embeddings = await embedChunks(chunks);
+
+    let embeddings: number[][] | null = null;
+    try {
+      const result = await embedChunks(chunks, cache);
+      embeddings = result.embeddings;
+      totalFetched += result.fetched;
+    } catch (error) {
+      // Cota estourada ou Gemini fora do ar NÃO pode derrubar o build:
+      // sem embeddings o chat cai para a opção A e continua funcionando.
+      console.warn(
+        `\n  aviso: falha ao embedar (${locale}) — o chat vai usar o contexto inteiro.`,
+      );
+      console.warn(`  ${error instanceof Error ? error.message.split("\n")[0] : error}`);
+    }
+
     entries.push({
       locale,
       text,
@@ -181,6 +249,9 @@ async function main() {
       embeddings,
     });
   }
+
+  fs.mkdirSync(path.dirname(CACHE), { recursive: true });
+  fs.writeFileSync(CACHE, JSON.stringify(cache), "utf8");
 
   const embedded = entries.every((e) => e.embeddings !== null);
 
@@ -241,7 +312,11 @@ async function main() {
       );
     }
   }
-  console.log("");
+  console.log(
+    totalFetched === 0
+      ? "    (embeddings vieram todos do cache — zero chamadas à api)\n"
+      : `    (${totalFetched} chunks embedados; o resto veio do cache)\n`,
+  );
 }
 
 main().catch((error) => {
