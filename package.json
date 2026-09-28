@@ -6,9 +6,17 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "build:context": "tsx scripts/build-context.ts",
+    "predev": "npm run build:context",
+    "prebuild": "npm run build:context"
   },
   "dependencies": {
+    "@ai-sdk/groq": "^4.0.51",
+    "@ai-sdk/react": "^4.0.123",
+    "@upstash/ratelimit": "^2.2.0",
+    "@upstash/redis": "^1.39.0",
+    "ai": "^7.0.120",
     "gray-matter": "^4.0.3",
     "next": "16.3.2",
     "next-mdx-remote": "^6.0.0",
@@ -24,6 +32,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.3.2",
     "tailwindcss": "^4",
+    "tsx": "^4.23.15",
     "typescript": "^5"
   }
 }

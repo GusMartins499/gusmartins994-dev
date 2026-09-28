@@ -9,6 +9,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: "", changeFrequency: "monthly", priority: 1 },
     { path: "/projects", changeFrequency: "monthly", priority: 0.8 },
     { path: "/notes", changeFrequency: "weekly", priority: 0.7 },
+    { path: "/chat", changeFrequency: "monthly", priority: 0.6 },
   ];
 
   const notes = getAllNotes();

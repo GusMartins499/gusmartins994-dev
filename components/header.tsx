@@ -40,6 +40,17 @@ export function Header({
               {item.label}
             </Link>
           ))}
+          {/* o chat é o único lugar interativo do site — marcado com o
+              chevron do prompt para se distinguir dos links navegáveis */}
+          <Link
+            href={`/${locale}/chat`}
+            className="rounded-field px-2 py-1.5 text-sm text-muted hover:bg-base-200 hover:text-primary sm:px-3"
+          >
+            <span aria-hidden="true" className="text-primary">
+              ›
+            </span>
+            {dict.nav.chat}
+          </Link>
           <a
             href={`/cv/${locale}`}
             target="_blank"
