@@ -63,8 +63,8 @@ export async function POST(req: Request) {
   // pessoa sozinha consome a cota do dia.
   const windowed = messages.slice(-(LIMITS.historyWindow * 2 + 1));
 
-  const context = await getContext(question, locale);
-  const system = buildSystemPrompt(context, locale);
+  const { context, matched } = await getContext(question, locale);
+  const system = buildSystemPrompt(context, locale, matched);
 
   const estimated =
     Math.ceil((system.length + JSON.stringify(windowed).length) / 4) +

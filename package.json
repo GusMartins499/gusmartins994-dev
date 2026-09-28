@@ -7,11 +7,12 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "build:context": "tsx scripts/build-context.ts",
+    "build:context": "tsx --env-file-if-exists=.env.local scripts/build-context.ts",
     "predev": "npm run build:context",
     "prebuild": "npm run build:context"
   },
   "dependencies": {
+    "@ai-sdk/google": "^4.0.84",
     "@ai-sdk/groq": "^4.0.51",
     "@ai-sdk/react": "^4.0.123",
     "@upstash/ratelimit": "^2.2.0",
