@@ -51,6 +51,11 @@ export const pt = {
       "me conta sobre o projeto de streams",
       "ele já resolveu problema de performance?",
     ],
+    launcher: {
+      title: "perguntar ao chat",
+      open: "abrir o chat (ctrl+k)",
+      hint: "enter abre o chat com a sua pergunta.",
+    },
     errors: {
       day: "a cota diária acabou. o chat tem um limite por dia para se manter gratuito — volta amanhã, ou me manda um e-mail.",
       minute: "muita gente perguntando ao mesmo tempo. tenta de novo em alguns segundos.",
