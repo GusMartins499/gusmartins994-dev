@@ -1,0 +1,64 @@
+name: CI/CD — Preview
+
+# Roda em todo Pull Request para a main: valida (CI) e publica um deploy de
+# preview na Vercel via CLI. O deploy automático da integração Git da Vercel
+# deve ficar DESCONECTADO para não gerar deploy em duplicidade.
+
+on:
+  pull_request:
+    branches: [main]
+
+# Cancela runs antigos do mesmo PR quando um novo push chega.
+concurrency:
+  group: preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  # IDs do projeto na Vercel (identificadores, não são segredos).
+  VERCEL_ORG_ID: team_Ru0oKvfqOGJ17JDzQSK4BTOv
+  VERCEL_PROJECT_ID: prj_WO7UJ0za5svrLHE9zap7QddHtMSE
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write # para comentar a URL do preview no PR
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Instala dependências
+        run: npm ci
+
+      # --- CI (gates de qualidade) ---
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Lint
+        run: npm run lint
+
+      # --- CD (deploy de preview) ---
+      - name: Instala Vercel CLI
+        run: npm i -g vercel@latest
+
+      - name: Puxa env de preview da Vercel
+        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build
+        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy de preview
+        id: deploy
+        run: echo "url=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})" >> "$GITHUB_OUTPUT"
+
+      - name: Comenta a URL do preview no PR
+        run: |
+          gh pr comment "$PR" --body "✅ Preview publicado: ${{ steps.deploy.outputs.url }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.number }}
