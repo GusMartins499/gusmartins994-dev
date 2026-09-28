@@ -188,3 +188,49 @@ body {
   position: relative;
   isolation: isolate;
 }
+
+/* ── Chat / terminal ────────────────────────────────────────────────── */
+
+/* Boot do mascote: cada linha entra com um atraso próprio, sem timer em JS */
+.mascot-row {
+  opacity: 0;
+  animation: mascot-in 0.28s ease-out var(--row-delay, 0ms) forwards;
+}
+@keyframes mascot-in {
+  from { opacity: 0; transform: translateX(-0.45rem); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Bloco de cursor do mascote pisca depois que o desenho termina */
+.mascot-cursor {
+  animation: blink 1.1s steps(1) 900ms infinite;
+}
+
+/* Linhas de boot entram em cascata */
+.boot-line {
+  opacity: 0;
+  animation: boot-in 0.3s ease-out var(--line-delay, 0ms) forwards;
+}
+@keyframes boot-in {
+  from { opacity: 0; transform: translateY(0.25rem); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Cursor colado no texto que está streamando */
+.stream-cursor::after {
+  content: "";
+  display: inline-block;
+  width: 0.55ch;
+  height: 1em;
+  margin-left: 0.1ch;
+  background: var(--color-primary);
+  vertical-align: -0.12em;
+  animation: blink 1s steps(1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mascot-row,
+  .boot-line { opacity: 1 !important; animation: none !important; transform: none !important; }
+  .mascot-cursor,
+  .stream-cursor::after { animation: none !important; }
+}

@@ -1,7 +1,7 @@
 import type { Dictionary } from "./pt";
 
 export const en: Dictionary = {
-  nav: { projects: "projects", notes: "notes", resume: "resume" },
+  nav: { projects: "projects", notes: "notes", resume: "resume", chat: "chat" },
   sections: { stack: "skills & stack", projects: "projects", notes: "notes" },
   common: { seeAll: "see all" },
   a11y: {
@@ -26,6 +26,54 @@ export const en: Dictionary = {
   },
   footer: {
     contact: "contact",
+  },
+  chat: {
+    title: "chat",
+    subtitle: "ask about gustavo's projects, notes and experience.",
+    navLabel: "chat",
+    version: "gusmartins.chat v1.0.0",
+    bootModel: "gpt-oss-120b · groq",
+    bootCwd: "~/www/gusmartinsdev.com.br",
+    bootTip: "ask in plain language. /help for commands.",
+    bootMock: "mock mode — no GROQ_API_KEY, answers are simulated.",
+    placeholder: "ask something…",
+    send: "send",
+    stop: "stop",
+    inputLabel: "your question",
+    logLabel: "conversation",
+    you: "you",
+    assistant: "chat",
+    thinking: ["thinking", "reading the notes", "connecting dots", "writing"],
+    thinkingSr: "generating answer",
+    escToCancel: "esc cancels",
+    jumpToEnd: "jump to end",
+    disclaimer: "ai-generated from this site's content. it can be wrong.",
+    suggestions: [
+      "what technologies does he work with?",
+      "tell me about the streams project",
+      "has he solved performance problems?",
+    ],
+    errors: {
+      day: "daily quota is out. the chat has a daily cap to stay free — come back tomorrow, or drop him an e-mail.",
+      minute: "too many people asking at once. try again in a few seconds.",
+      ip: "you asked a lot in a row. take a breath and try again shortly.",
+      too_long: "question too long. try to shorten it.",
+      generic: "something broke here. try again.",
+      retry: "try again",
+      retryIn: "unlocks in",
+      notSent: "not sent",
+    },
+    commands: {
+      help: "list the commands",
+      clear: "clear the conversation",
+      projects: "open projects",
+      notes: "open notes",
+      cv: "download the resume",
+      theme: "toggle light/dark",
+      lang: "toggle pt/en",
+      unknown: "unknown command:",
+      header: "available commands:",
+    },
   },
   meta: { portfolioOf: "Portfolio of" },
 };
