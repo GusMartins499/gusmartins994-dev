@@ -1,15 +1,8 @@
 import type { MetadataRoute } from "next";
 import { site } from "@/lib/site";
-import { locales, bcp47 } from "@/i18n/config";
+import { locales } from "@/i18n/config";
 import { getAllNotes } from "@/lib/notes";
-
-// Constrói o objeto `languages` (hreflang) para uma rota relativa,
-// apontando cada locale para sua URL absoluta correspondente.
-function languagesFor(path: string): Record<string, string> {
-  return Object.fromEntries(
-    locales.map((l) => [bcp47[l], `${site.url}/${l}${path}`]),
-  );
-}
+import { absoluteLanguagesFor } from "@/lib/seo";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const routes: { path: string; changeFrequency: "monthly" | "weekly"; priority: number }[] = [
@@ -27,7 +20,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: route.path === "/notes" && lastNote ? lastNote : undefined,
       changeFrequency: route.changeFrequency,
       priority: route.priority,
-      alternates: { languages: languagesFor(route.path) },
+      alternates: { languages: absoluteLanguagesFor(route.path) },
     })),
   );
 
@@ -37,7 +30,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: note.date || undefined,
       changeFrequency: "yearly" as const,
       priority: 0.6,
-      alternates: { languages: languagesFor(`/notes/${note.slug}`) },
+      alternates: { languages: absoluteLanguagesFor(`/notes/${note.slug}`) },
     })),
   );
 
