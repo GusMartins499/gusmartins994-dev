@@ -7,6 +7,7 @@ import { getDictionary } from "@/i18n/dictionaries";
 import { SectionHeading } from "@/components/section";
 import { NoteCard } from "@/components/note-card";
 import { CdUp } from "@/components/cd-up";
+import { ListKeyboard } from "@/components/list-keyboard";
 import { JsonLd } from "@/components/json-ld";
 import { alternatesFor, FEED_PATH, absoluteUrl } from "@/lib/seo";
 
@@ -86,11 +87,19 @@ export default async function NotesPage({
       {notes.length === 0 ? (
         <p className="text-faint">{dict.notes.empty}</p>
       ) : (
-        <div className="grid grid-cols-1 gap-4">
-          {notes.map((note) => (
-            <NoteCard key={note.slug} note={note} locale={l} />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 gap-4">
+            {notes.map((note) => (
+              <NoteCard
+                key={note.slug}
+                note={note}
+                locale={l}
+                readingLabel={dict.notes.readingTime}
+              />
+            ))}
+          </div>
+          <ListKeyboard label={dict.common.navigateList} />
+        </>
       )}
     </div>
   );

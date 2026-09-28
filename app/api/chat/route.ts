@@ -6,9 +6,11 @@ import {
   toUIMessageStream,
   simulateReadableStream,
   type UIMessage,
+  type UIMessageChunk,
 } from "ai";
 import { isLocale, defaultLocale, type Locale } from "@/i18n/config";
 import { getContext, buildSystemPrompt } from "@/lib/chat/context-provider";
+import type { Source } from "@/lib/chat/chunk";
 import { checkBudget, recordUsage, LIMITS } from "@/lib/chat/budget";
 
 // Sem `export const runtime`: o Edge Runtime está deprecado no Next 16 e
@@ -29,6 +31,34 @@ function textOf(message: UIMessage): string {
     .filter((p): p is { type: "text"; text: string } => p.type === "text")
     .map((p) => p.text)
     .join(" ");
+}
+
+/**
+ * Injeta as fontes no stream logo DEPOIS do chunk `start`.
+ *
+ * O ponto de inserção não é detalhe: escrita antes do `start` chega ao
+ * cliente sem nenhuma mensagem aberta para receber a parte, e é
+ * silenciosamente descartada. Logo após o `start` é o primeiro instante
+ * válido — os links ficam prontos antes do primeiro token do texto.
+ */
+function withSources(
+  stream: ReadableStream<UIMessageChunk>,
+  sources: Source[],
+): ReadableStream<UIMessageChunk> {
+  if (sources.length === 0) return stream;
+  let injected = false;
+
+  return stream.pipeThrough(
+    new TransformStream<UIMessageChunk, UIMessageChunk>({
+      transform(chunk, controller) {
+        controller.enqueue(chunk);
+        if (!injected && chunk.type === "start") {
+          injected = true;
+          controller.enqueue({ type: "data-sources", data: sources });
+        }
+      },
+    }),
+  );
 }
 
 function refuse(reason: string, retryAfter: number) {
@@ -63,7 +93,7 @@ export async function POST(req: Request) {
   // pessoa sozinha consome a cota do dia.
   const windowed = messages.slice(-(LIMITS.historyWindow * 2 + 1));
 
-  const { context, matched } = await getContext(question, locale);
+  const { context, matched, sources } = await getContext(question, locale);
   const system = buildSystemPrompt(context, locale, matched);
 
   const estimated =
@@ -77,7 +107,7 @@ export async function POST(req: Request) {
   //    para dar para testar a UX inteira sem criar conta em lugar nenhum.
   if (!hasKey) {
     return createUIMessageStreamResponse({
-      stream: mockStream(question, locale),
+      stream: withSources(mockStream(question, locale), sources),
     });
   }
 
@@ -109,8 +139,13 @@ export async function POST(req: Request) {
     },
   });
 
+  // As fontes saem do retrieval, não do modelo — é o que garante que o
+  // link citado existe de verdade.
   return createUIMessageStreamResponse({
-    stream: toUIMessageStream({ stream: result.stream }),
+    stream: withSources(
+      toUIMessageStream({ stream: result.stream }),
+      sources,
+    ),
   });
 }
 

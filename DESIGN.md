@@ -77,6 +77,85 @@ Todos os pares que carregam texto passam no mínimo **WCAG AA**. Regra de ouro:
 Os temas são definidos em `app/globals.css` via `@plugin "daisyui/theme"` e
 trocados por `data-theme` no `<html>`.
 
+## Interação
+
+### Paleta de comandos (⌘K / ctrl+K / `/`)
+
+Um só painel para navegar, executar ações locais (tema, idioma, copiar
+e-mail, redes) e perguntar ao chat. Texto livre com mais de uma palavra sobe
+a opção "perguntar ao chat" para o topo; qualquer outra coisa filtra os
+comandos (busca sem acento/caixa). Não duplica o chat: entrega a pergunta a
+`/chat?q=`. Fica indisponível na própria página do chat, onde o terminal já
+captura o teclado. Chrome de janela de terminal, `↑↓` navega, `↵` executa,
+`esc` fecha.
+
+### Gramática dos cards
+
+Projetos e notes usam a mesma estrutura, para que um card seja sempre lido
+do mesmo jeito:
+
+```
+> título                         data / ação
+  caminho real (repo ou arquivo .mdx)
+  descrição
+  tokens de stack / #tags
+```
+
+O hover não levanta o card: uma barra vermelha de 2px desce pela borda
+esquerda (`.card-term`) — é o cursor do terminal entrando no item. Só em
+elementos clicáveis; blocos estáticos (grupos da stack) não têm hover.
+
+### Hero
+
+Comando e saída: `~/gusmartins $ whoami` é digitado e o resto "imprime" em
+cascata (`.boot-line`, ~100ms entre linhas). Fecha com três ações — ver
+projetos (primária), perguntar à ia, currículo — os números reais do site
+(projetos/notes/techs) e a dica do ⌘K.
+
+### Leitura das notes
+
+Barra de progresso no topo, tempo de leitura ao lado da data, sumário
+quando o post tem 2+ seções, `#` copiável em cada heading e, no fim,
+anterior/próximo. Sem `text-justify`: em monoespaçada com medida estreita
+ele abre buracos entre palavras.
+
+### Citações do chat
+
+As fontes da resposta saem do **retrieval**, não do modelo: a rota manda os
+links dos chunks que casaram como data part, antes do primeiro token, e a
+UI os mostra embaixo da resposta. O system prompt proíbe escrever url — url
+inventada é o erro mais fácil de um llm cometer, e com isso ele fica
+impossível. No fim de cada note há um atalho que abre o chat com a pergunta
+sobre aquele post já escrita.
+
+### Navegação
+
+`j`/`k` percorrem as listas movendo o foco de verdade (então `enter` abre e
+o card acende pelo `:focus-within`). Troca de rota entra com um fade curto
+(`.page-enter`, remontado por `key={pathname}`) — o `<ViewTransition>` do
+React ainda é canary e aqui roda React 19 estável. 404 é uma tela de
+terminal com o caminho que falhou.
+
+### Header
+
+Sticky com `backdrop-blur`. A rota ativa ganha o chevron `›` em vermelho.
+O gatilho da paleta fica visível também no mobile (onde não há atalho de
+teclado). Tema e idioma vivem no DOM (`data-theme`, cookie `NEXT_LOCALE`) e
+são lidos como store externo, então header e paleta nunca divergem.
+
+### Fundo
+
+Uma camada fixa atrás do conteúdo: a grade, em duas escalas — fina de 32px
+e forte a cada 128px. A hierarquia entre as duas é o que a faz parecer papel
+milimetrado (claro) / grade de caracteres (escuro) em vez de ruído. Some em
+degradê rumo ao rodapé.
+
+Tokens `--grid` e `--grid-major` por tema, em `app/globals.css`.
+
+> Já teve brilho no topo, vinheta e scanline de CRT junto. Ficou sujo: fundo
+> decorado competindo com conteúdo simples. A regra que sobrou é **o fundo
+> sustenta o conteúdo, não disputa com ele**.
+
 ## Estrutura de conteúdo (como "alimentar" o site)
 
 Conteúdo mora no repositório — adicionar = criar/editar arquivo e dar `git push`.

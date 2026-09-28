@@ -1,7 +1,17 @@
 export const pt = {
   nav: { projects: "projetos", notes: "notes", resume: "currículo", chat: "chat" },
+  home: {
+    whoami: "whoami",
+    cta: {
+      projects: "ver projetos",
+      chat: "perguntar à ia",
+      resume: "currículo",
+    },
+    stats: { projects: "projetos", notes: "notes", tech: "techs" },
+    paletteHint: "abre a paleta de comandos em qualquer página",
+  },
   sections: { stack: "skills & stack", projects: "projetos", notes: "notes" },
-  common: { seeAll: "ver todos" },
+  common: { seeAll: "ver todos", navigateList: "navegam pela lista" },
   a11y: {
     skip: "Pular para o conteúdo",
     themeToLight: "Mudar para o tema claro",
@@ -21,6 +31,14 @@ export const pt = {
     subtitle:
       "Um canto pra escrever sobre o que ando aprendendo e alguns problemas reais que já resolvi",
     empty: "Nada por aqui ainda.",
+    readingTime: "min de leitura",
+    toc: "sumário",
+    copyLink: "copiar link desta seção",
+    copied: "link copiado",
+    askAbout: "perguntar ao chat sobre esta note",
+    askPrefix: "me conta sobre a note",
+    newer: "mais recente",
+    older: "mais antigo",
   },
   footer: {
     contact: "contato",
@@ -45,17 +63,13 @@ export const pt = {
     thinkingSr: "gerando resposta",
     escToCancel: "esc cancela",
     jumpToEnd: "voltar ao fim",
+    sources: "fontes",
     disclaimer: "respostas geradas por ia a partir do conteúdo deste site. pode errar.",
     suggestions: [
       "com quais tecnologias ele trabalha?",
       "me conta sobre o projeto de streams",
       "ele já resolveu problema de performance?",
     ],
-    launcher: {
-      title: "perguntar ao chat",
-      open: "abrir o chat (ctrl+k)",
-      hint: "enter abre o chat com a sua pergunta.",
-    },
     errors: {
       day: "a cota diária acabou. o chat tem um limite por dia para se manter gratuito — volta amanhã, ou me manda um e-mail.",
       minute: "muita gente perguntando ao mesmo tempo. tenta de novo em alguns segundos.",
@@ -77,6 +91,36 @@ export const pt = {
       unknown: "comando desconhecido:",
       header: "comandos disponíveis:",
     },
+  },
+  palette: {
+    title: "paleta de comandos",
+    open: "abrir a paleta de comandos",
+    chrome: "gusmartins — palette",
+    placeholder: "digite um comando ou pergunte…",
+    groups: { go: "ir para", actions: "ações", ask: "perguntar" },
+    go: {
+      home: "home",
+      projects: "projetos",
+      notes: "notes",
+      chat: "chat",
+      resume: "currículo",
+    },
+    actions: {
+      theme: "alternar tema",
+      themeHint: { toDark: "escuro", toLight: "claro" },
+      lang: "mudar idioma",
+      copyEmail: "copiar e-mail",
+      copied: "copiado ✓",
+    },
+    askWith: "perguntar ao chat",
+    empty: "nenhum comando casa. enter pergunta ao chat.",
+    keys: { nav: "navegar", run: "abrir", close: "fechar" },
+    newTab: "nova aba",
+  },
+  notFound: {
+    reason: "arquivo ou diretório não encontrado",
+    hint: "essa rota não existe. talvez tenha mudado de lugar — ou o link estava errado.",
+    home: "voltar pra home",
   },
   meta: { portfolioOf: "Portfólio de" },
 };

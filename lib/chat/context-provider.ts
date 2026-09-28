@@ -12,6 +12,7 @@
 import { createGoogle } from "@ai-sdk/google";
 import { embed, cosineSimilarity } from "ai";
 import type { Locale } from "@/i18n/config";
+import type { Source } from "./chunk";
 import {
   generatedContext,
   contextTokens,
@@ -56,14 +57,40 @@ export type RetrievalResult = {
   mode: "retrieval" | "full";
   /** Quantos chunks passaram do piso — 0 significa "não sei responder". */
   matched: number;
+  /**
+   * Páginas de onde os trechos vieram, na ordem do ranking e sem repetir.
+   * A UI mostra como link: a citação é calculada aqui, não escrita pelo
+   * modelo, então não tem como vir url inventada.
+   */
+  sources: Source[];
 };
+
+/** Máximo de fontes mostradas embaixo da resposta. */
+const MAX_SOURCES = 3;
+
+function dedupeSources(list: (Source | undefined)[]): Source[] {
+  const seen = new Set<string>();
+  const out: Source[] = [];
+  for (const source of list) {
+    if (!source || seen.has(source.href)) continue;
+    seen.add(source.href);
+    out.push(source);
+    if (out.length === MAX_SOURCES) break;
+  }
+  return out;
+}
 
 export async function getContext(
   query: string,
   locale: Locale,
 ): Promise<RetrievalResult> {
   if (!retrievalEnabled || !query.trim()) {
-    return { context: generatedContext[locale], mode: "full", matched: 0 };
+    return {
+      context: generatedContext[locale],
+      mode: "full",
+      matched: 0,
+      sources: [],
+    };
   }
 
   try {
@@ -93,18 +120,24 @@ export async function getContext(
       .slice(0, TOP_K);
 
     if (ranked.length === 0) {
-      return { context: "", mode: "retrieval", matched: 0 };
+      return { context: "", mode: "retrieval", matched: 0, sources: [] };
     }
 
     return {
       context: ranked.map((r) => r.chunk.text).join("\n\n---\n\n"),
       mode: "retrieval",
       matched: ranked.length,
+      sources: dedupeSources(ranked.map((r) => r.chunk.source)),
     };
   } catch {
     // Gemini fora do ar / cota estourada: responder com o contexto inteiro
     // é melhor do que não responder.
-    return { context: generatedContext[locale], mode: "full", matched: 0 };
+    return {
+      context: generatedContext[locale],
+      mode: "full",
+      matched: 0,
+      sources: [],
+    };
   }
 }
 
@@ -137,7 +170,7 @@ export function buildSystemPrompt(
           "- Seja direto e curto: 2 a 4 frases na maioria das perguntas.",
           "- Tom de terminal: caixa baixa, sem emoji, sem floreio corporativo.",
           "- Se perguntarem algo fora do escopo (assuntos gerais, pedir código, tarefas), recuse em uma frase e reconduza para o que você sabe sobre o Gustavo.",
-          "- Quando citar uma note ou projeto, inclua a url que está no contexto.",
+          "- Não escreva urls: o site já mostra os links das fontes embaixo da resposta. Cite pelo nome.",
           "- O contexto são trechos selecionados, não tudo que existe. Se parecer incompleto, diga que pode haver mais no site.",
           "",
           "--- CONTEXTO ---",
@@ -152,7 +185,7 @@ export function buildSystemPrompt(
           "- Be direct and short: 2 to 4 sentences for most questions.",
           "- Terminal tone: lowercase, no emoji, no corporate fluff.",
           "- If asked anything out of scope (general topics, writing code, doing tasks), decline in one sentence and steer back to what you know about Gustavo.",
-          "- When citing a note or project, include the url from the context.",
+          "- Do not write urls: the site already shows the source links under the answer. Cite by name.",
           "- The context is a selection of excerpts, not everything that exists. If it looks incomplete, say there may be more on the site.",
           "",
           "--- CONTEXT ---",

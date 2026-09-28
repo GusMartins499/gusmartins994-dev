@@ -4,7 +4,8 @@ import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LangToggle } from "@/components/lang-toggle";
-import { Launcher } from "@/components/chat/launcher";
+import { NavLink } from "@/components/nav-link";
+import { Palette } from "@/components/palette";
 
 export function Header({
   locale,
@@ -13,14 +14,11 @@ export function Header({
   locale: Locale;
   dict: Dictionary;
 }) {
-  const nav = [
-    { href: `/${locale}/projects`, label: dict.nav.projects },
-    { href: `/${locale}/notes`, label: dict.nav.notes },
-  ];
-
   return (
-    <header className="border-b border-base-300">
-      <div className="mx-auto flex max-w-3xl flex-wrap items-center justify-between gap-x-2 gap-y-2 px-4 py-4">
+    <header className="sticky top-0 z-40 border-b border-base-300 bg-base-100/85 backdrop-blur-md">
+      {/* Sem wrap: os quatro links não cabem em 375px, então abaixo de `sm`
+          eles dão lugar ao gatilho da paleta — que é o menu no mobile. */}
+      <div className="mx-auto flex max-w-3xl items-center gap-2 px-4 py-3">
         <Link
           href={`/${locale}`}
           className="shrink-0 text-sm font-medium text-base-content hover:text-primary sm:text-base"
@@ -28,39 +26,32 @@ export function Header({
           <span className="text-primary">~/</span>
           {site.handle}
         </Link>
+
         <nav
           aria-label="Navegação principal"
-          className="ml-auto flex items-center gap-0.5 sm:gap-1"
+          className="ml-auto flex items-center gap-1"
         >
-          {nav.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="rounded-field px-2 py-1.5 text-sm text-muted hover:bg-base-200 hover:text-base-content sm:px-3"
+          <div className="hidden items-center gap-0.5 sm:flex">
+            <NavLink href={`/${locale}/projects`}>{dict.nav.projects}</NavLink>
+            <NavLink href={`/${locale}/notes`}>{dict.nav.notes}</NavLink>
+            <NavLink href={`/${locale}/chat`}>{dict.nav.chat}</NavLink>
+            <a
+              href={`/cv/${locale}`}
+              target="_blank"
+              rel="noopener"
+              className="rounded-field px-2 py-1.5 text-sm text-muted transition-colors hover:bg-base-200/60 hover:text-base-content sm:px-2.5"
             >
-              {item.label}
-            </Link>
-          ))}
-          {/* o chat é o único lugar interativo do site — marcado com o
-              chevron do prompt para se distinguir dos links navegáveis */}
-          <Link
-            href={`/${locale}/chat`}
-            className="rounded-field px-2 py-1.5 text-sm text-muted hover:bg-base-200 hover:text-primary sm:px-3"
-          >
-            <span aria-hidden="true" className="text-primary">
-              ›
-            </span>
-            {dict.nav.chat}
-          </Link>
-          <a
-            href={`/cv/${locale}`}
-            target="_blank"
-            rel="noopener"
-            className="rounded-field px-2 py-1.5 text-sm text-muted hover:bg-base-200 hover:text-base-content sm:px-3"
-          >
-            {dict.nav.resume}
-          </a>
-          <Launcher locale={locale} dict={dict} />
+              {dict.nav.resume}
+            </a>
+
+            {/* separador: à esquerda navegação, à direita controles */}
+            <span
+              aria-hidden="true"
+              className="mx-1.5 h-4 w-px bg-base-300"
+            />
+          </div>
+
+          <Palette locale={locale} dict={dict} />
           <LangToggle current={locale} label={dict.a11y.language} />
           <ThemeToggle
             toLightLabel={dict.a11y.themeToLight}

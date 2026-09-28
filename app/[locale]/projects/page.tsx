@@ -7,6 +7,7 @@ import { getDictionary } from "@/i18n/dictionaries";
 import { SectionHeading } from "@/components/section";
 import { ProjectCard } from "@/components/project-card";
 import { CdUp } from "@/components/cd-up";
+import { ListKeyboard } from "@/components/list-keyboard";
 import { JsonLd } from "@/components/json-ld";
 import { alternatesFor, absoluteUrl } from "@/lib/seo";
 
@@ -92,6 +93,7 @@ export default async function ProjectsPage({
           />
         ))}
       </div>
+      <ListKeyboard label={dict.common.navigateList} />
     </div>
   );
 }

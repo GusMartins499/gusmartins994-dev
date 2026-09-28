@@ -22,7 +22,7 @@ import { getAllNotes, getNote } from "../lib/notes";
 import { site, stack } from "../lib/site";
 import { projects } from "../content/projects";
 import { locales, type Locale } from "../i18n/config";
-import { chunkSection, type Chunk } from "../lib/chat/chunk";
+import { chunkSection, type Chunk, type Source } from "../lib/chat/chunk";
 import { createGoogle } from "@ai-sdk/google";
 import { embedMany } from "ai";
 
@@ -38,7 +38,7 @@ function cleanMarkdown(md: string): string {
     .trim();
 }
 
-type Section = { heading: string; body: string };
+type Section = { heading: string; body: string; source?: Source };
 
 function sectionsFor(locale: Locale): Section[] {
   const out: Section[] = [];
@@ -69,6 +69,7 @@ function sectionsFor(locale: Locale): Section[] {
         `stack: ${project.stack.join(", ")}`,
         `repositório: ${project.repo}`,
       ].join("\n"),
+      source: { title: project.name, href: project.repo, kind: "project" },
     });
   }
 
@@ -83,6 +84,11 @@ function sectionsFor(locale: Locale): Section[] {
         "",
         cleanMarkdown(note.content),
       ].join("\n"),
+      source: {
+        title: meta.title,
+        href: `/${locale}/notes/${meta.slug}`,
+        kind: "note",
+      },
     });
   }
 
@@ -224,7 +230,7 @@ async function main() {
   for (const locale of locales) {
     const text = buildFor(locale);
     const chunks = sectionsFor(locale).flatMap((s) =>
-      chunkSection(s.heading, s.body),
+      chunkSection(s.heading, s.body, s.source),
     );
 
     let embeddings: number[][] | null = null;
@@ -269,7 +275,13 @@ async function main() {
     ...entries.map((e) => `  ${e.locale}: ${e.tokens},`),
     "};",
     "",
-    "export type IndexedChunk = { text: string; heading: string; embedding: number[] };",
+    'export type Source = { title: string; href: string; kind: "note" | "project" };',
+    "export type IndexedChunk = {",
+    "  text: string;",
+    "  heading: string;",
+    "  source?: Source;",
+    "  embedding: number[];",
+    "};",
     "",
     "/** Chunks com embedding, para a busca semântica (opção B). */",
     "export const indexedChunks: Record<Locale, IndexedChunk[]> = {",
@@ -279,6 +291,7 @@ async function main() {
           e.chunks.map((c, i) => ({
             text: c.text,
             heading: c.heading,
+            source: c.source,
             embedding: e.embeddings ? e.embeddings[i].map((v) => Number(v.toFixed(6))) : [],
           })),
         )},`,

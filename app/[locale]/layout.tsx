@@ -11,6 +11,7 @@ import { alternatesFor, FEED_PATH } from "@/lib/seo";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { FloatingNav } from "@/components/floating-nav";
+import { PageTransition } from "@/components/page-transition";
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
@@ -147,7 +148,7 @@ export default async function LocaleLayout({
         </a>
         <Header locale={typedLocale} dict={dict} />
         <main id="conteudo" className="mx-auto max-w-3xl px-4 py-12">
-          {children}
+          <PageTransition>{children}</PageTransition>
         </main>
         <Footer dict={dict} />
         <FloatingNav

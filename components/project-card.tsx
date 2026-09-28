@@ -1,5 +1,11 @@
 import type { Project } from "@/content/projects";
 import type { Locale } from "@/i18n/config";
+import { TagList } from "@/components/tag";
+
+/** `https://github.com/GusMartins499/woovi-challenge` → `GusMartins499/woovi-challenge` */
+function repoPath(repo: string): string {
+  return repo.replace(/^https?:\/\/(www\.)?github\.com\//, "").replace(/\/$/, "");
+}
 
 export function ProjectCard({
   project,
@@ -16,28 +22,32 @@ export function ProjectCard({
       target="_blank"
       rel="noopener noreferrer"
       aria-label={`${project.name} — ${openLabel}`}
-      className="group block rounded-box border border-base-300 bg-base-200 p-5 transition-all duration-200 hover:-translate-y-1 hover:border-primary hover:shadow-lg hover:shadow-primary/10 focus-visible:border-primary"
+      data-nav-item
+      className="card-term group block p-5"
     >
-      <div className="mb-2 flex items-center justify-between gap-3">
-        <h3 className="font-medium text-base-content group-hover:text-primary">
-          <span aria-hidden="true" className="text-primary">
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="min-w-0 truncate font-medium text-base-content transition-colors group-hover:text-primary">
+          <span
+            aria-hidden="true"
+            className="inline-block text-primary transition-transform duration-200 group-hover:translate-x-0.5"
+          >
             {"> "}
           </span>
           {project.name}
         </h3>
         <ExternalIcon />
       </div>
-      <p className="mb-4 text-sm text-muted">{project.description[locale]}</p>
-      <ul className="flex flex-wrap gap-1.5">
-        {project.stack.map((tech) => (
-          <li
-            key={tech}
-            className="rounded-field bg-accent-soft px-2 py-0.5 text-xs text-primary"
-          >
-            {tech}
-          </li>
-        ))}
-      </ul>
+
+      {/* para onde o card leva, dito por extenso */}
+      <p className="mt-0.5 truncate text-xs text-faint">
+        github.com/{repoPath(project.repo)}
+      </p>
+
+      <p className="mt-3 mb-4 text-sm text-muted">
+        {project.description[locale]}
+      </p>
+
+      <TagList items={project.stack} />
     </a>
   );
 }
@@ -55,7 +65,7 @@ function ExternalIcon() {
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
-      className="shrink-0 text-muted transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-primary"
+      className="shrink-0 text-faint transition-all duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-primary"
     >
       <path d="M7 17 17 7M9 7h8v8" />
     </svg>
