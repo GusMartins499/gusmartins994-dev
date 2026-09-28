@@ -1,5 +1,6 @@
 import { site, socials } from "@/lib/site";
 import type { Dictionary } from "@/i18n/dictionaries";
+import { PaletteHint } from "@/components/palette-hint";
 
 export function Footer({ dict }: { dict: Dictionary }) {
   const year = new Date().getFullYear();
@@ -31,6 +32,8 @@ export function Footer({ dict }: { dict: Dictionary }) {
           <span aria-hidden="true">~ $</span>
           <span className="terminal-cursor" aria-hidden="true" />
         </div>
+        <PaletteHint label={dict.palette.title} />
+
         <p className="mt-4 text-xs text-faint">
           © {year} {site.name}
         </p>

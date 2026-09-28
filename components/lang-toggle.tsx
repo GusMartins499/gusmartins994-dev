@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { locales, type Locale } from "@/i18n/config";
+import { rememberLocale, withLocale } from "@/lib/locale";
 
 export function LangToggle({
   current,
@@ -15,17 +16,8 @@ export function LangToggle({
 
   function switchTo(target: Locale) {
     if (target === current) return;
-    const segments = pathname.split("/");
-    segments[1] = target;
-    const nextPath = segments.join("/") || `/${target}`;
-    try {
-      // Persiste a preferência de idioma pro middleware (proxy.ts) ler.
-      // eslint-disable-next-line react-hooks/immutability -- escrita de cookie é side-effect legítimo de browser dentro de um handler
-      document.cookie = `NEXT_LOCALE=${target};path=/;max-age=31536000`;
-    } catch {
-      // ignora indisponibilidade de cookies
-    }
-    router.push(nextPath);
+    rememberLocale(target);
+    router.push(withLocale(pathname, target));
   }
 
   return (

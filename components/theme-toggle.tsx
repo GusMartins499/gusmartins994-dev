@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
-type Theme = "dark" | "light";
+import { useSyncExternalStore } from "react";
+import { currentTheme, subscribeTheme, toggleTheme } from "@/lib/theme";
 
 export function ThemeToggle({
   toLightLabel,
@@ -11,45 +10,26 @@ export function ThemeToggle({
   toLightLabel: string;
   toDarkLabel: string;
 }) {
-  const [theme, setTheme] = useState<Theme>("dark");
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    // Sincroniza com o data-theme já aplicado no DOM pelo theme-script antes
-    // da hidratação; o flag `mounted` evita mismatch de hidratação do ícone.
-    const current =
-      (document.documentElement.getAttribute("data-theme") as Theme) ?? "dark";
-    /* eslint-disable react-hooks/set-state-in-effect -- sync único de estado externo (DOM) no mount */
-    setTheme(current);
-    setMounted(true);
-    /* eslint-enable react-hooks/set-state-in-effect */
-  }, []);
-
-  function toggle() {
-    const next: Theme = theme === "dark" ? "light" : "dark";
-    setTheme(next);
-    document.documentElement.setAttribute("data-theme", next);
-    try {
-      localStorage.setItem("theme", next);
-    } catch {
-      // ignora indisponibilidade de storage
-    }
-  }
+  // O tema mora no DOM (`data-theme`, aplicado pelo theme-script antes da
+  // hidratação) e pode ser trocado também pela paleta de comandos — ler o
+  // atributo como store externo mantém os dois sempre no mesmo estado.
+  const theme = useSyncExternalStore(
+    subscribeTheme,
+    () => currentTheme(),
+    () => "dark" as const,
+  );
 
   const label = theme === "dark" ? toLightLabel : toDarkLabel;
 
   return (
     <button
       type="button"
-      onClick={toggle}
+      onClick={() => toggleTheme()}
       className="btn btn-ghost btn-sm btn-square"
       aria-label={label}
       title={label}
     >
-      {/* Evita mismatch de hidratação: só mostra o ícone após montar */}
-      {mounted && theme === "dark" ? <SunIcon /> : null}
-      {mounted && theme === "light" ? <MoonIcon /> : null}
-      {!mounted ? <span className="h-5 w-5" /> : null}
+      {theme === "dark" ? <SunIcon /> : <MoonIcon />}
     </button>
   );
 }

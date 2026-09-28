@@ -10,11 +10,24 @@
  *     trecho solto ("reduziu de 40s para 2s") perde o assunto e nunca casa
  *     com a pergunta.
  */
+/** Página deste site (ou repositório) de onde o trecho veio. */
+export type Source = {
+  title: string;
+  href: string;
+  kind: "note" | "project";
+};
+
 export type Chunk = {
   /** Texto que vai para o prompt (já com o cabeçalho). */
   text: string;
   /** De onde veio, para citar a fonte. */
   heading: string;
+  /**
+   * Link clicável da fonte, quando existe. É o que permite a resposta
+   * citar a note ou o repositório sem depender do modelo escrever a url
+   * certa — url inventada é o erro mais fácil de um llm cometer.
+   */
+  source?: Source;
 };
 
 const TARGET = 800;
@@ -56,7 +69,11 @@ function splitLongParagraph(paragraph: string): string[] {
 }
 
 /** Divide uma seção em chunks, prefixando cada um com o cabeçalho. */
-export function chunkSection(heading: string, body: string): Chunk[] {
+export function chunkSection(
+  heading: string,
+  body: string,
+  source?: Source,
+): Chunk[] {
   const paragraphs = splitParagraphs(body);
   const pieces: string[] = [];
   let buffer = "";
@@ -81,6 +98,7 @@ export function chunkSection(heading: string, body: string): Chunk[] {
 
   return pieces.map((text) => ({
     heading,
+    source,
     text: `[${heading}]\n${text}`,
   }));
 }

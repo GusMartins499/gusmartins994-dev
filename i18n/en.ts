@@ -2,8 +2,18 @@ import type { Dictionary } from "./pt";
 
 export const en: Dictionary = {
   nav: { projects: "projects", notes: "notes", resume: "resume", chat: "chat" },
+  home: {
+    whoami: "whoami",
+    cta: {
+      projects: "see projects",
+      chat: "ask the ai",
+      resume: "resume",
+    },
+    stats: { projects: "projects", notes: "notes", tech: "techs" },
+    paletteHint: "opens the command palette on any page",
+  },
   sections: { stack: "skills & stack", projects: "projects", notes: "notes" },
-  common: { seeAll: "see all" },
+  common: { seeAll: "see all", navigateList: "move through the list" },
   a11y: {
     skip: "Skip to content",
     themeToLight: "Switch to light theme",
@@ -23,6 +33,14 @@ export const en: Dictionary = {
     subtitle:
       "A corner to write about what I'm learning and some real problems solved",
     empty: "Nothing here yet.",
+    readingTime: "min read",
+    toc: "contents",
+    copyLink: "copy link to this section",
+    copied: "link copied",
+    askAbout: "ask the chat about this note",
+    askPrefix: "tell me about the note",
+    newer: "newer",
+    older: "older",
   },
   footer: {
     contact: "contact",
@@ -47,17 +65,13 @@ export const en: Dictionary = {
     thinkingSr: "generating answer",
     escToCancel: "esc cancels",
     jumpToEnd: "jump to end",
+    sources: "sources",
     disclaimer: "ai-generated from this site's content. it can be wrong.",
     suggestions: [
       "what technologies does he work with?",
       "tell me about the streams project",
       "has he solved performance problems?",
     ],
-    launcher: {
-      title: "ask the chat",
-      open: "open the chat (ctrl+k)",
-      hint: "enter opens the chat with your question.",
-    },
     errors: {
       day: "daily quota is out. the chat has a daily cap to stay free — come back tomorrow, or drop him an e-mail.",
       minute: "too many people asking at once. try again in a few seconds.",
@@ -79,6 +93,36 @@ export const en: Dictionary = {
       unknown: "unknown command:",
       header: "available commands:",
     },
+  },
+  palette: {
+    title: "command palette",
+    open: "open the command palette",
+    chrome: "gusmartins — palette",
+    placeholder: "type a command or ask something…",
+    groups: { go: "go to", actions: "actions", ask: "ask" },
+    go: {
+      home: "home",
+      projects: "projects",
+      notes: "notes",
+      chat: "chat",
+      resume: "resume",
+    },
+    actions: {
+      theme: "toggle theme",
+      themeHint: { toDark: "dark", toLight: "light" },
+      lang: "change language",
+      copyEmail: "copy e-mail",
+      copied: "copied ✓",
+    },
+    askWith: "ask the chat",
+    empty: "no command matches. enter asks the chat.",
+    keys: { nav: "navigate", run: "open", close: "close" },
+    newTab: "new tab",
+  },
+  notFound: {
+    reason: "no such file or directory",
+    hint: "this route does not exist. it may have moved — or the link was wrong.",
+    home: "back home",
   },
   meta: { portfolioOf: "Portfolio of" },
 };

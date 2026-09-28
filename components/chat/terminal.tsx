@@ -3,9 +3,11 @@
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries";
+import type { Source } from "@/lib/chat/chunk";
 import { Boot } from "./boot";
 import { Spinner } from "./spinner";
 import { Countdown } from "./countdown";
@@ -17,6 +19,15 @@ import {
 } from "./commands";
 
 type SystemLine = { id: string; kind: "system" | "error"; text: string };
+
+/**
+ * Fontes que a rota anexou à resposta (data part). Vêm do retrieval, então
+ * são links que existem de verdade — o modelo não escreve url nenhuma.
+ */
+function sourcesOf(message: UIMessage): Source[] {
+  const part = message.parts.find((p) => p.type === "data-sources");
+  return part && "data" in part ? (part.data as Source[]) : [];
+}
 
 function textOf(message: UIMessage): string {
   return message.parts
@@ -268,6 +279,7 @@ export function Terminal({
         >
           {messages.map((message) => {
             const body = textOf(message);
+            const sources = sourcesOf(message);
             const isUser = message.role === "user";
             const isLast = message.id === messages[messages.length - 1]?.id;
             const failed = message.id === failedId;
@@ -295,6 +307,35 @@ export function Terminal({
                   <span className="ml-2 text-xs text-faint">
                     ({dict.chat.errors.notSent})
                   </span>
+                )}
+
+                {!isUser && sources.length > 0 && (
+                  <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+                    <span className="text-faint">{dict.chat.sources}:</span>
+                    {sources.map((source) =>
+                      source.kind === "note" ? (
+                        <Link
+                          key={source.href}
+                          href={source.href}
+                          className="text-primary underline-offset-4 hover:underline"
+                        >
+                          <span aria-hidden="true">› </span>
+                          {source.title}
+                        </Link>
+                      ) : (
+                        <a
+                          key={source.href}
+                          href={source.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary underline-offset-4 hover:underline"
+                        >
+                          {source.title}
+                          <span aria-hidden="true"> ↗</span>
+                        </a>
+                      ),
+                    )}
+                  </p>
                 )}
               </div>
             );

@@ -78,11 +78,13 @@
   --muted: #a4988e;
   --faint: #6b625c;
   --accent-soft: #231010;
+  --primary-hover: #ff5c50;
 }
 [data-theme="light"] {
   --muted: #6a655c;
   --faint: #8f887c;
   --accent-soft: #f7ddd7;
+  --primary-hover: #9a2c1a;
 }
 
 .text-muted { color: var(--muted); }
@@ -99,6 +101,11 @@ html {
 html,
 body {
   overflow-x: clip;
+}
+
+/* O header é sticky: âncoras e o skip link não podem parar debaixo dele */
+html {
+  scroll-padding-top: 4.5rem;
 }
 
 /* a11y: foco sempre visível e consistente */
@@ -128,7 +135,8 @@ body {
   white-space: nowrap;
   vertical-align: bottom;
   width: 0;
-  animation: typing 1.1s steps(var(--type-steps, 15), end) 0.15s forwards;
+  animation: typing var(--type-duration, 1.1s) steps(var(--type-steps, 15), end)
+    0.15s forwards;
 }
 @keyframes typing {
   to { width: var(--type-width, 15ch); }
@@ -161,13 +169,22 @@ body {
 }
 .skip-link:focus { top: 0.5rem; }
 
-/* ── Fundo global: grade graph-paper ────────────────────────────────── */
+/* ── Fundo global: grade ────────────────────────────────────────────── */
+
+/* Uma camada só, atrás do conteúdo. Duas escalas (fina de 32px, forte a
+   cada 128px) dão à grade uma hierarquia que uma escala só não tem — é o
+   que a faz parecer papel milimetrado em vez de ruído. Nada de brilho,
+   vinheta ou scanline: o fundo sustenta o conteúdo, não compete com ele. */
+
 [data-theme="dark"] {
-  --grid: rgba(236, 231, 223, 0.045);
+  --grid: rgba(236, 231, 223, 0.035);
+  --grid-major: rgba(236, 231, 223, 0.06);
 }
 [data-theme="light"] {
-  --grid: rgba(26, 26, 26, 0.045);
+  --grid: rgba(26, 26, 26, 0.035);
+  --grid-major: rgba(26, 26, 26, 0.06);
 }
+
 body::before {
   content: "";
   position: fixed;
@@ -175,11 +192,26 @@ body::before {
   z-index: -1;
   pointer-events: none;
   background:
+    linear-gradient(var(--grid-major) 1px, transparent 1px) 0 0 / 128px 128px,
+    linear-gradient(90deg, var(--grid-major) 1px, transparent 1px) 0 0 /
+      128px 128px,
     linear-gradient(var(--grid) 1px, transparent 1px) 0 0 / 32px 32px,
     linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0 / 32px 32px;
-  /* esmaece as bordas p/ não brigar com o conteúdo */
-  -webkit-mask-image: radial-gradient(120% 100% at 50% 0%, #000 55%, transparent 100%);
-          mask-image: radial-gradient(120% 100% at 50% 0%, #000 55%, transparent 100%);
+  /* some devagar rumo ao rodapé, em vez de cortar no meio da tela */
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    #000 0%,
+    #000 55%,
+    rgba(0, 0, 0, 0.3) 85%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    #000 0%,
+    #000 55%,
+    rgba(0, 0, 0, 0.3) 85%,
+    transparent 100%
+  );
 }
 
 /* body precisa formar um stacking context, senão o ::before (z-index:-1)
@@ -233,4 +265,111 @@ body {
   .boot-line { opacity: 1 !important; animation: none !important; transform: none !important; }
   .mascot-cursor,
   .stream-cursor::after { animation: none !important; }
+}
+
+/* ── Paleta de comandos (⌘K) ────────────────────────────────────────── */
+
+.palette-overlay {
+  animation: palette-fade 0.14s ease-out;
+}
+.palette-panel {
+  animation: palette-in 0.18s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+@keyframes palette-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes palette-in {
+  from { opacity: 0; transform: translateY(-0.5rem) scale(0.985); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Scrollbar discreta dentro da lista de resultados */
+#palette-list {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-base-300) transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .palette-overlay,
+  .palette-panel { animation: none !important; }
+}
+
+/* ── Card de terminal (projetos, notes) ─────────────────────────────── */
+
+/* A barra vermelha que desce na borda esquerda no hover é o cursor do
+   terminal "entrando" no item — substitui o lift + sombra genérico. */
+.card-term {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-box);
+  border: 1px solid var(--color-base-300);
+  background: color-mix(in oklab, var(--color-base-200) 70%, transparent);
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+}
+.card-term::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 2px;
+  background: var(--color-primary);
+  transform: scaleY(0);
+  transform-origin: top;
+  transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+.card-term:hover,
+.card-term:focus-within {
+  border-color: color-mix(in oklab, var(--color-primary) 45%, var(--color-base-300));
+  background: var(--color-base-200);
+}
+.card-term:hover::before,
+.card-term:focus-within::before {
+  transform: scaleY(1);
+}
+
+/* ── Botões do hero ─────────────────────────────────────────────────── */
+
+.term-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: var(--radius-field);
+  border: 1px solid var(--color-base-300);
+  background: color-mix(in oklab, var(--color-base-200) 70%, transparent);
+  padding: 0.5rem 0.85rem;
+  font-size: 0.875rem;
+  color: var(--color-base-content);
+  transition:
+    border-color 0.18s ease,
+    color 0.18s ease,
+    background-color 0.18s ease;
+}
+.term-btn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+.term-btn-primary {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: var(--color-primary-content);
+  font-weight: 500;
+}
+.term-btn-primary:hover {
+  border-color: var(--primary-hover);
+  background: var(--primary-hover);
+  color: var(--color-primary-content);
+}
+
+/* ── Transição entre rotas ──────────────────────────────────────────── */
+
+/* Curta de propósito: o suficiente para o olho entender que a página
+   trocou, sem atrasar quem só quer ler. `prefers-reduced-motion` zera. */
+.page-enter {
+  animation: page-enter 0.2s ease-out;
+}
+@keyframes page-enter {
+  from { opacity: 0; transform: translateY(0.35rem); }
+  to   { opacity: 1; transform: none; }
 }
