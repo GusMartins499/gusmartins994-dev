@@ -3,7 +3,7 @@
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries";
 import { Boot } from "./boot";
@@ -35,6 +35,7 @@ export function Terminal({
   mock: boolean;
 }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [input, setInput] = useState("");
   const [systemLines, setSystemLines] = useState<SystemLine[]>([]);
   const [history, setHistory] = useState<string[]>([]);
@@ -197,6 +198,21 @@ export function Terminal({
       }
     }
   }
+
+  // Pergunta vinda do launcher (⌘K) por ?q=. Dispara uma vez e limpa a
+  // url, senão um reload reenviaria a mesma pergunta e comeria cota.
+  const seeded = useRef(false);
+  useEffect(() => {
+    if (seeded.current) return;
+    const q = searchParams.get("q");
+    if (!q?.trim()) return;
+    seeded.current = true;
+    router.replace(`/${locale}/chat`, { scroll: false });
+    // Fora do corpo do effect: chamar submit() direto dispara setState
+    // síncrono dentro do effect, o que o react-hooks/set-state-in-effect
+    // proíbe (e causa render em cascata).
+    queueMicrotask(() => submit(q));
+  }, [searchParams, locale, router, submit]);
 
   // Digitar em qualquer lugar da página foca o input, como num terminal.
   useEffect(() => {

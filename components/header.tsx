@@ -4,6 +4,7 @@ import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LangToggle } from "@/components/lang-toggle";
+import { Launcher } from "@/components/chat/launcher";
 
 export function Header({
   locale,
@@ -59,6 +60,7 @@ export function Header({
           >
             {dict.nav.resume}
           </a>
+          <Launcher locale={locale} dict={dict} />
           <LangToggle current={locale} label={dict.a11y.language} />
           <ThemeToggle
             toLightLabel={dict.a11y.themeToLight}

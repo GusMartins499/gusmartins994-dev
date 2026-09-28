@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { isLocale, type Locale } from "@/i18n/config";
@@ -43,7 +44,17 @@ export default async function ChatPage({
         <p className="max-w-xl text-muted">{dict.chat.subtitle}</p>
       </header>
 
-      <Terminal locale={l} dict={dict} mock={mock} />
+      {/* O Terminal lê ?q= (pergunta vinda do ⌘K) com useSearchParams, que
+          exige Suspense para a página seguir prerenderizada como estática. */}
+      <Suspense
+        fallback={
+          <div className="rounded-box border border-base-300 bg-base-200/60 p-4 text-sm text-faint">
+            {dict.chat.title}…
+          </div>
+        }
+      >
+        <Terminal locale={l} dict={dict} mock={mock} />
+      </Suspense>
     </div>
   );
 }

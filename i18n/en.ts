@@ -53,6 +53,11 @@ export const en: Dictionary = {
       "tell me about the streams project",
       "has he solved performance problems?",
     ],
+    launcher: {
+      title: "ask the chat",
+      open: "open the chat (ctrl+k)",
+      hint: "enter opens the chat with your question.",
+    },
     errors: {
       day: "daily quota is out. the chat has a daily cap to stay free — come back tomorrow, or drop him an e-mail.",
       minute: "too many people asking at once. try again in a few seconds.",
