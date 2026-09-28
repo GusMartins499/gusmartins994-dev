@@ -1,4 +1,4 @@
-# DESIGN.md — gusmartins994.dev
+# DESIGN.md — gusmartinsdev.com.br
 
 A planta do portfólio. Decisões de design e arquitetura tomadas antes do código,
 para servir de referência ao longo do tempo.

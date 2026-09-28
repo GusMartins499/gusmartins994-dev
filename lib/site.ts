@@ -25,7 +25,7 @@ export const site = {
     ],
   } satisfies Record<Locale, string[]>,
   email: "gustavosm994@gmail.com",
-  url: "https://gusmartins994.dev",
+  url: "https://gusmartinsdev.com.br",
 } as const;
 
 export const socials: Social[] = [

@@ -8,6 +8,7 @@ import { site } from "@/lib/site";
 import { mdxComponents } from "@/components/mdx";
 import { JsonLd } from "@/components/json-ld";
 import { CdUp } from "@/components/cd-up";
+import { alternatesFor, absoluteUrl } from "@/lib/seo";
 
 export function generateStaticParams() {
   const notes = getAllNotes();
@@ -31,22 +32,16 @@ export async function generateMetadata({
     description: note.description,
     keywords: note.tags,
     authors: [{ name: site.name, url: site.url }],
-    alternates: {
-      canonical: `/${l}${path}`,
-      languages: {
-        "pt-BR": `/pt${path}`,
-        "en-US": `/en${path}`,
-        "x-default": `/pt${path}`,
-      },
-    },
+    alternates: alternatesFor(l, path),
     openGraph: {
       type: "article",
       title: note.title,
       description: note.description,
-      url: `${site.url}/${l}${path}`,
+      url: absoluteUrl(`/${l}${path}`),
       siteName: site.name,
       locale: bcp47[l].replace("-", "_"),
       publishedTime: note.date || undefined,
+      modifiedTime: note.date || undefined,
       authors: [site.name],
       tags: note.tags,
     },
@@ -70,23 +65,52 @@ export default async function NotePage({
   const note = getNote(slug);
   if (!note) notFound();
 
+  const noteUrl = absoluteUrl(`/${l}/notes/${slug}`);
+
   const articleLd = {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
+    "@id": `${noteUrl}#article`,
     headline: note.title,
     description: note.description,
     datePublished: note.date || undefined,
     dateModified: note.date || undefined,
     inLanguage: bcp47[l],
     keywords: note.tags.join(", "),
-    url: `${site.url}/${l}/notes/${slug}`,
-    mainEntityOfPage: `${site.url}/${l}/notes/${slug}`,
-    author: { "@type": "Person", name: site.name, url: site.url },
+    url: noteUrl,
+    mainEntityOfPage: { "@type": "WebPage", "@id": noteUrl },
+    image: `${noteUrl}/opengraph-image`,
+    // Contagem aproximada (o corpo é MDX), suficiente p/ o rich result.
+    wordCount: note.content.trim().split(/\s+/).length,
+    isPartOf: { "@id": absoluteUrl(`/${l}/notes#blog`) },
+    author: { "@id": `${site.url}/#person` },
+    publisher: { "@id": `${site.url}/#person` },
+  };
+
+  const breadcrumbLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: site.name,
+        item: absoluteUrl(`/${l}`),
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: dict.notes.title,
+        item: absoluteUrl(`/${l}/notes`),
+      },
+      { "@type": "ListItem", position: 3, name: note.title, item: noteUrl },
+    ],
   };
 
   return (
     <article className="mx-auto max-w-2xl text-justify">
       <JsonLd data={articleLd} />
+      <JsonLd data={breadcrumbLd} />
       <CdUp />
       <div className="mt-6 mb-8 border-b border-base-300 pb-6">
         <h1 className="mb-2 text-2xl font-medium text-base-content">

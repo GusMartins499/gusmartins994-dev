@@ -2,11 +2,12 @@ import type { Metadata } from "next";
 import { JetBrains_Mono } from "next/font/google";
 import { notFound } from "next/navigation";
 import "../globals.css";
-import { site, socials } from "@/lib/site";
+import { site, socials, stack } from "@/lib/site";
 import { locales, isLocale, bcp47, type Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 import { ThemeScript } from "@/components/theme-script";
 import { JsonLd } from "@/components/json-ld";
+import { alternatesFor, FEED_PATH } from "@/lib/seo";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { FloatingNav } from "@/components/floating-nav";
@@ -52,8 +53,8 @@ export async function generateMetadata({
       "node.js",
     ],
     alternates: {
-      canonical: `/${locale}`,
-      languages: { "pt-BR": "/pt", "en-US": "/en", "x-default": "/pt" },
+      ...alternatesFor(locale, ""),
+      types: { "application/rss+xml": FEED_PATH },
     },
     openGraph: {
       title,
@@ -68,6 +69,12 @@ export async function generateMetadata({
       card: "summary_large_image",
       title,
       description,
+    },
+    verification: {
+      google: process.env.GOOGLE_SITE_VERIFICATION,
+      other: process.env.BING_SITE_VERIFICATION
+        ? { "msvalidate.01": process.env.BING_SITE_VERIFICATION }
+        : undefined,
     },
     robots: {
       index: true,
@@ -98,11 +105,15 @@ export default async function LocaleLayout({
   const personLd = {
     "@context": "https://schema.org",
     "@type": "Person",
+    "@id": `${site.url}/#person`,
     name: site.name,
     url: `${site.url}/${typedLocale}`,
+    image: `${site.url}/${typedLocale}/opengraph-image`,
     email: `mailto:${site.email}`,
     jobTitle: site.role[typedLocale],
     description: site.about[typedLocale].join(" "),
+    knowsAbout: stack.flatMap((group) => group.items),
+    knowsLanguage: ["pt-BR", "en"],
     sameAs: socials
       .filter((s) => s.href.startsWith("http"))
       .map((s) => s.href),
@@ -111,10 +122,12 @@ export default async function LocaleLayout({
   const websiteLd = {
     "@context": "https://schema.org",
     "@type": "WebSite",
+    "@id": `${site.url}/#website`,
     name: site.name,
     url: site.url,
     inLanguage: bcp47[typedLocale],
-    author: { "@type": "Person", name: site.name, url: site.url },
+    author: { "@id": `${site.url}/#person` },
+    publisher: { "@id": `${site.url}/#person` },
   };
 
   return (
