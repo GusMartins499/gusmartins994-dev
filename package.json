@@ -9,7 +9,9 @@
     "lint": "eslint",
     "build:context": "tsx --env-file-if-exists=.env.local scripts/build-context.ts",
     "predev": "npm run build:context",
-    "prebuild": "npm run build:context"
+    "prebuild": "npm run build:context",
+    "pretypecheck": "npm run build:context",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@ai-sdk/google": "^4.0.84",
