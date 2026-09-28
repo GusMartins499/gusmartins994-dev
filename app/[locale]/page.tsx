@@ -45,7 +45,7 @@ export default async function Home({
             aria-hidden="true"
           />
         </h1>
-        <p className="mt-4 text-lg text-primary">// {site.role[l]}</p>
+        <p className="mt-4 text-lg text-primary">{`// ${site.role[l]}`}</p>
         <div className="mt-6 max-w-xl space-y-1 leading-relaxed text-muted">
           {site.about[l].map((line) => (
             <p key={line}>{line}</p>

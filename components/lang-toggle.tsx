@@ -19,6 +19,8 @@ export function LangToggle({
     segments[1] = target;
     const nextPath = segments.join("/") || `/${target}`;
     try {
+      // Persiste a preferência de idioma pro middleware (proxy.ts) ler.
+      // eslint-disable-next-line react-hooks/immutability -- escrita de cookie é side-effect legítimo de browser dentro de um handler
       document.cookie = `NEXT_LOCALE=${target};path=/;max-age=31536000`;
     } catch {
       // ignora indisponibilidade de cookies
