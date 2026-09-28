@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Ferramental de agente (bundles JS), não é código-fonte do projeto.
+    ".claude/**",
   ]),
 ]);
 

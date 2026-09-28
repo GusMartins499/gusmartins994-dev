@@ -15,10 +15,14 @@ export function ThemeToggle({
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    // Sincroniza com o data-theme já aplicado no DOM pelo theme-script antes
+    // da hidratação; o flag `mounted` evita mismatch de hidratação do ícone.
     const current =
       (document.documentElement.getAttribute("data-theme") as Theme) ?? "dark";
+    /* eslint-disable react-hooks/set-state-in-effect -- sync único de estado externo (DOM) no mount */
     setTheme(current);
     setMounted(true);
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, []);
 
   function toggle() {
