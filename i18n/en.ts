@@ -32,7 +32,7 @@ export const en: Dictionary = {
     subtitle: "ask about gustavo's projects, notes and experience.",
     navLabel: "chat",
     version: "gusmartins.chat v1.0.0",
-    bootModel: "gpt-oss-120b · free tier",
+    bootModel: "gpt-oss-120b · groq",
     bootCwd: "~/www/gusmartinsdev.com.br",
     bootTip: "ask in plain language. /help for commands.",
     bootMock: "mock mode — no GROQ_API_KEY, answers are simulated.",
@@ -60,6 +60,8 @@ export const en: Dictionary = {
       too_long: "question too long. try to shorten it.",
       generic: "something broke here. try again.",
       retry: "try again",
+      retryIn: "unlocks in",
+      notSent: "not sent",
     },
     commands: {
       help: "list the commands",

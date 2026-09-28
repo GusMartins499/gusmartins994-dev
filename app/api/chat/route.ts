@@ -89,6 +89,20 @@ export async function POST(req: Request) {
     messages: await convertToModelMessages(windowed),
     maxOutputTokens: LIMITS.maxOutputTokens,
     temperature: 0.3,
+    providerOptions: {
+      groq: {
+        // O gpt-oss emite raciocínio antes da resposta, e esses tokens
+        // saem do mesmo orçamento de maxOutputTokens — nos testes davam
+        // ~100 dos 400, com risco de cortar a resposta no meio. Para
+        // "quais tecnologias ele usa?" não há o que raciocinar: o custo
+        // é real e o ganho, nenhum.
+        //
+        // "low", não "none": o tipo do @ai-sdk/groq aceita "none", mas a
+        // api do Groq rejeita com 400 para o gpt-oss — só admite low,
+        // medium ou high.
+        reasoningEffort: "low",
+      },
+    },
     onFinish({ usage }) {
       // Consumo REAL, não a estimativa.
       void recordUsage(usage?.totalTokens ?? estimated);

@@ -8,6 +8,7 @@ import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries";
 import { Boot } from "./boot";
 import { Spinner } from "./spinner";
+import { Countdown } from "./countdown";
 import {
   commandList,
   hrefFor,
@@ -212,7 +213,13 @@ export function Terminal({
   }, []);
 
   const suggestions = matchCommands(input);
-  const errorText = errorMessage(error, dict);
+  const parsed = parseError(error, dict);
+
+  // A pergunta que falhou fica pendurada em `messages` sem resposta, o que
+  // parece travamento. Marca ela como não enviada.
+  const lastMessage = messages[messages.length - 1];
+  const failedId =
+    parsed && lastMessage?.role === "user" ? lastMessage.id : null;
 
   return (
     <div className="rounded-box border border-base-300 bg-base-200/60 backdrop-blur-[1px]">
@@ -247,24 +254,32 @@ export function Terminal({
             const body = textOf(message);
             const isUser = message.role === "user";
             const isLast = message.id === messages[messages.length - 1]?.id;
+            const failed = message.id === failedId;
             return (
               <div key={message.id} className="text-sm leading-relaxed">
                 <span
                   aria-hidden="true"
-                  className={isUser ? "text-muted" : "text-primary"}
+                  className={
+                    failed ? "text-error" : isUser ? "text-muted" : "text-primary"
+                  }
                 >
-                  {isUser ? "~ " : "> "}
+                  {failed ? "✗ " : isUser ? "~ " : "> "}
                 </span>
                 <span className="sr-only">
                   {isUser ? `${dict.chat.you}: ` : `${dict.chat.assistant}: `}
                 </span>
                 <span
                   className={`whitespace-pre-wrap ${
-                    isUser ? "text-base-content" : "text-base-content"
+                    failed ? "text-faint line-through" : "text-base-content"
                   } ${!isUser && isLast && status === "streaming" ? "stream-cursor" : ""}`}
                 >
                   {body}
                 </span>
+                {failed && (
+                  <span className="ml-2 text-xs text-faint">
+                    ({dict.chat.errors.notSent})
+                  </span>
+                )}
               </div>
             );
           })}
@@ -288,20 +303,29 @@ export function Terminal({
             />
           )}
 
-          {errorText && (
+          {parsed && (
             <div className="space-y-1 text-sm">
-              <p className="text-error">{errorText}</p>
-              <button
-                type="button"
-                onClick={() => {
-                  clearError();
-                  const last = history[history.length - 1];
-                  if (last) submit(last);
-                }}
-                className="text-faint underline underline-offset-4 hover:text-primary"
-              >
-                {dict.chat.errors.retry}
-              </button>
+              <p className="text-error">{parsed.text}</p>
+              <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+                {parsed.retryAfter !== null && (
+                  <Countdown
+                    key={parsed.retryAfter}
+                    seconds={parsed.retryAfter}
+                    label={dict.chat.errors.retryIn}
+                  />
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    clearError();
+                    const last = history[history.length - 1];
+                    if (last) submit(last);
+                  }}
+                  className="text-faint underline underline-offset-4 hover:text-primary"
+                >
+                  {dict.chat.errors.retry}
+                </button>
+              </p>
             </div>
           )}
         </div>
@@ -409,12 +433,39 @@ export function Terminal({
   );
 }
 
-/** Traduz o erro da rota (429/413) para a mensagem certa. */
-function errorMessage(error: Error | undefined, dict: Dictionary): string | null {
+type ParsedError = { text: string; retryAfter: number | null };
+
+/**
+ * Lê o corpo json do 429/413 que a rota devolve ({error, retryAfter}).
+ *
+ * Antes isto casava substring no texto do erro, o que era frágil: "ip"
+ * aparece dentro de outras palavras. Agora extrai o json de verdade e só
+ * cai no genérico se não achar.
+ */
+function parseError(
+  error: Error | undefined,
+  dict: Dictionary,
+): ParsedError | null {
   if (!error) return null;
   const raw = error.message ?? "";
-  for (const key of ["day", "minute", "ip", "too_long"] as const) {
-    if (raw.includes(key)) return dict.chat.errors[key];
+  const match = raw.match(/\{[\s\S]*\}/);
+
+  if (match) {
+    try {
+      const body = JSON.parse(match[0]) as {
+        error?: string;
+        retryAfter?: number;
+      };
+      const key = body.error;
+      if (key === "day" || key === "minute" || key === "ip" || key === "too_long") {
+        return {
+          text: dict.chat.errors[key],
+          retryAfter: typeof body.retryAfter === "number" ? body.retryAfter : null,
+        };
+      }
+    } catch {
+      // corpo não era json — cai no genérico
+    }
   }
-  return dict.chat.errors.generic;
+  return { text: dict.chat.errors.generic, retryAfter: null };
 }

@@ -296,7 +296,7 @@ async function main() {
 
   console.log("\n  contexto do chat gerado:");
   for (const e of entries) {
-    const full = e.tokens + 200 + 400;
+    const full = e.tokens + 200 + 600;
     console.log(
       `    ${e.locale}: ${e.tokens} tokens · ${e.chunks.length} chunks` +
         (e.embeddings ? " · embeddings ok" : " · SEM embeddings (fallback p/ contexto inteiro)"),
@@ -305,7 +305,7 @@ async function main() {
       const avg = Math.ceil(
         e.chunks.reduce((sum, c) => sum + c.text.length, 0) / e.chunks.length / 4,
       );
-      const retrieved = avg * 5 + 200 + 400;
+      const retrieved = avg * 5 + 200 + 600;
       console.log(
         `         opção A: ~${full}/pergunta · opção B: ~${retrieved}/pergunta` +
           `  →  ${Math.floor(6000 / retrieved)} perguntas/min (era ${Math.floor(6000 / full)})`,

@@ -30,7 +30,7 @@ export const pt = {
     subtitle: "pergunte sobre os projetos, notes e experiência do gustavo.",
     navLabel: "chat",
     version: "gusmartins.chat v1.0.0",
-    bootModel: "gpt-oss-120b · free tier",
+    bootModel: "gpt-oss-120b · groq",
     bootCwd: "~/www/gusmartinsdev.com.br",
     bootTip: "pergunte em linguagem natural. /help para comandos.",
     bootMock: "modo mock — sem GROQ_API_KEY, respostas são simuladas.",
@@ -58,6 +58,8 @@ export const pt = {
       too_long: "pergunta muito longa. tenta encurtar.",
       generic: "algo quebrou aqui. tenta de novo.",
       retry: "tentar de novo",
+      retryIn: "libera em",
+      notSent: "não enviada",
     },
     commands: {
       help: "lista os comandos",
