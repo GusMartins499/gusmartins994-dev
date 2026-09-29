@@ -1,0 +1,63 @@
+---
+title: My first project in production with async-jobs
+description: Automating image generation and publishing on Instagram
+date: 2026-06-15
+tags: [typescript, next.js, cloudflare, queue, IG API]
+---
+
+Recently I built a web-app to automate the posts on the Instagram of Centro Espírita Caminho da Verdade, the place I attend. It all started with a pain.
+
+We needed to bring the Instagram account of the center to life, and the idea came up of posting the next talks every week, plus an image a few hours before each talk saying who the speaker is and what the subject is. The problem was operational: the post needed to go out at the right time, it depended on a photo of the speaker and on someone with access to Instagram to post it.
+
+Few people in the center are comfortable with social media, so this work ended up falling on my wife. The thing is, she was not the one scheduling the talks and, most of the time, she did not have the photo of the speaker, so she had to ask another person for it. This created a dependency that was not hers, many times the post did not go out, and other times it went out right before the talk.
+
+That is when I thought about automating the process from end to end: an institutional website for the spiritist center and an admin panel where speakers and talks are registered. For each talk that is registered, the image for Instagram is generated and the post is scheduled automatically. This way, nobody needs to open an image editor or remember to post at the right time.
+
+## Architecture
+
+I started drawing the architecture with two goals: keep things simple and avoid any cost for the center as much as possible. That is when I chose Cloudflare as the base of the project, the free tier is generous and it comes with a set of tools that covers almost everything I needed.
+
+From Cloudflare I use:
+
+- **D1:** serverless relational database (SQLite), where the talks and speakers live.
+- **Workers:** where all the backend logic runs.
+- **Queues:** for the asynchronous processing (more about this below).
+- **R2:** object storage, with one bucket for the photo of the speaker and another one for the card (the generated image).
+
+Rendering the card itself happens on Vercel, using next/og. The Worker has a low CPU limit on the free plan, and drawing the image would go over that limit, so the Worker hands off this step, it calls Vercel, receives the finished PNG and saves it in R2.
+
+## Queues
+
+The heart of the project is three queues:
+
+- **Card generation:** when a talk is registered or edited (or when the photo of the speaker is changed), a job is queued. The Worker consumes this job, asks for the image to be rendered and saves the PNG in R2. The operation is idempotent, the card is written with the talk ID as the key, so regenerating simply overwrites it.
+- **Email notification:** after the card is saved, a second job sends an email to the administrators with a direct link to the card in R2 (valid for 7 days). It is the visual check before any post goes out.
+- **Dead-letter queue (DLQ):** if any step fails after three attempts, the job lands in the DLQ, which sends me an alert by email. Nothing disappears "out of nowhere".
+
+Separating generation and notification into different queues brings safety. If the card was generated but sending the email fails, only the sending is retried, without rendering the image again.
+
+## Publishing on Instagram
+
+The talks always happen on Mondays, at 8 PM. To post at the right time, I use the scheduled handlers (cron) of Cloudflare Workers. The Worker wakes up at the scheduled moment, looks up in D1 the information about the next talk and the matching card in R2, and posts it on the Instagram account of the center through the API.
+
+There are two types of post: the weekly post with the next talks and the image that goes out hours before each talk, with the speaker and the subject. The caption is built from a fixed template, which only interpolates the name of the speaker and the subject, the hashtags and the address of the center are hardcoded.
+
+And one thing is worth noting: the Instagram API has no cost. You only need to meet a few requirements and you can start using it.
+
+## Observability
+
+To see what happens in production, the project uses OpenTelemetry together with Honeycomb, another tool with a generous free tier. Each card becomes a complete trace, from the registration to the post, and I receive an email whenever a critical failure happens.
+
+## Email
+
+For sending, I use Resend, which allows 100 emails per day on the free plan, and this is much more than this project needs.
+
+## Cost
+
+In the end, my only cost to keep the web-app in production was R$ 40.00, the price of the domain for one year. And this can get even cheaper if the renewal is done for 2, 3 or 5 years.
+
+## Conclusion
+
+It is possible to put a real application in production using Cloudflare as the base, almost with no cost. The free tier is quite generous, and, adding open source tools like OpenTelemetry, you cover pretty much everything: database, backend, queues, storage and observability.
+
+It was my first project in production with asynchronous processing, and what stayed with me the most was seeing how a simple everyday pain can turn into a whole system, and this is what motivates me to build solutions that have a positive impact on the life of people, because, in the end, it is not only code.

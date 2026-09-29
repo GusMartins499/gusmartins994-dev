@@ -51,7 +51,7 @@ export default async function NotesPage({
   if (!isLocale(locale)) notFound();
   const l: Locale = locale;
   const dict = getDictionary(l);
-  const notes = getAllNotes();
+  const notes = getAllNotes(l);
 
   const blogLd = {
     "@context": "https://schema.org",
@@ -81,9 +81,6 @@ export default async function NotesPage({
       </div>
       <SectionHeading as="h1">{dict.notes.title}</SectionHeading>
       <p className="mb-8 text-muted">{dict.notes.subtitle}</p>
-      <p className="mb-8 text-muted text-xs">
-        Soon, all posts will be translated into English
-      </p>
       {notes.length === 0 ? (
         <p className="text-faint">{dict.notes.empty}</p>
       ) : (

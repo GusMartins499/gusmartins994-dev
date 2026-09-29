@@ -20,7 +20,7 @@ export default async function Home({
   if (!isLocale(locale)) notFound();
   const l: Locale = locale;
   const dict = getDictionary(l);
-  const notes = getAllNotes();
+  const notes = getAllNotes(l);
   const latestNotes = notes.slice(0, 2);
   const techCount = new Set(stack.flatMap((group) => group.items)).size;
 

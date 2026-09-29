@@ -31,7 +31,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale, slug } = await params;
   const l = isLocale(locale) ? locale : "pt";
-  const note = getNote(slug);
+  const note = getNote(slug, l);
   if (!note) return {};
   const path = `/notes/${slug}`;
   return {
@@ -69,7 +69,7 @@ export default async function NotePage({
   if (!isLocale(locale)) notFound();
   const l: Locale = locale;
   const dict = getDictionary(l);
-  const note = getNote(slug);
+  const note = getNote(slug, l);
   if (!note) notFound();
 
   const noteUrl = absoluteUrl(`/${l}/notes/${slug}`);
@@ -77,7 +77,7 @@ export default async function NotePage({
 
   // A lista vem do mais recente para o mais antigo: o vizinho anterior no
   // array é o post mais novo.
-  const all = getAllNotes();
+  const all = getAllNotes(l);
   const index = all.findIndex((n) => n.slug === slug);
   const newer = index > 0 ? all[index - 1] : null;
   const older = index >= 0 && index < all.length - 1 ? all[index + 1] : null;

@@ -73,8 +73,8 @@ function sectionsFor(locale: Locale): Section[] {
     });
   }
 
-  for (const meta of getAllNotes()) {
-    const note = getNote(meta.slug);
+  for (const meta of getAllNotes(locale)) {
+    const note = getNote(meta.slug, locale);
     if (!note) continue;
     out.push({
       heading: `note: ${meta.title}`,
@@ -96,9 +96,9 @@ function sectionsFor(locale: Locale): Section[] {
 }
 
 function buildFor(locale: Locale): string {
-  const notes = getAllNotes()
+  const notes = getAllNotes(locale)
     .map((meta) => {
-      const note = getNote(meta.slug);
+      const note = getNote(meta.slug, locale);
       if (!note) return "";
       return [
         `### ${meta.title}`,

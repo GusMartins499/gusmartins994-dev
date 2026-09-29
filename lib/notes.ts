@@ -1,12 +1,20 @@
 import fs from "node:fs";
 import path from "node:path";
 import matter from "gray-matter";
-import { bcp47, type Locale } from "@/i18n/config";
+import { bcp47, defaultLocale, type Locale } from "@/i18n/config";
 
-// Camada de leitura do mini-blog. Cada arquivo em content/notes/*.mdx
+// Camada de leitura do mini-blog. Cada arquivo em content/notes/<locale>/*.mdx
 // é um post público. Sem flags: se o arquivo existe, o post está no ar.
+//
+// O mesmo post existe com o MESMO nome de arquivo em cada locale — é isso que
+// mantém o slug (e portanto a URL e o hreflang) igual entre /pt e /en. Post
+// ainda não traduzido cai no locale padrão em vez de sumir da listagem.
 
-const NOTES_DIR = path.join(process.cwd(), "content", "notes");
+const NOTES_ROOT = path.join(process.cwd(), "content", "notes");
+
+function dirFor(locale: Locale): string {
+  return path.join(NOTES_ROOT, locale);
+}
 
 export type NoteMeta = {
   slug: string;
@@ -55,9 +63,30 @@ export function extractHeadings(content: string): Heading[] {
 
 export type Note = NoteMeta & { content: string };
 
-function readFilenames(): string[] {
-  if (!fs.existsSync(NOTES_DIR)) return [];
-  return fs.readdirSync(NOTES_DIR).filter((f) => f.endsWith(".mdx"));
+function readFilenames(locale: Locale): string[] {
+  const dir = dirFor(locale);
+  if (!fs.existsSync(dir)) return [];
+  return fs.readdirSync(dir).filter((f) => f.endsWith(".mdx"));
+}
+
+/**
+ * Nomes de arquivo do locale pedido, completados com os que só existem no
+ * locale padrão. O conjunto de posts é o mesmo em toda língua; o que muda é
+ * de qual pasta o conteúdo vem.
+ */
+function filenamesWithFallback(locale: Locale): string[] {
+  const own = readFilenames(locale);
+  if (locale === defaultLocale) return own;
+  const seen = new Set(own);
+  return [...own, ...readFilenames(defaultLocale).filter((f) => !seen.has(f))];
+}
+
+/** Caminho do arquivo no locale pedido, ou no locale padrão se não traduzido. */
+function resolveFile(filename: string, locale: Locale): string | null {
+  const wanted = path.join(dirFor(locale), filename);
+  if (fs.existsSync(wanted)) return wanted;
+  const fallback = path.join(dirFor(defaultLocale), filename);
+  return fs.existsSync(fallback) ? fallback : null;
 }
 
 function toISODate(value: unknown): string {
@@ -75,10 +104,11 @@ function slugFromFilename(filename: string): string {
     .replace(/^\d{4}-\d{2}-\d{2}-/, "");
 }
 
-export function getAllNotes(): NoteMeta[] {
-  return readFilenames()
+export function getAllNotes(locale: Locale = defaultLocale): NoteMeta[] {
+  return filenamesWithFallback(locale)
     .map((filename) => {
-      const raw = fs.readFileSync(path.join(NOTES_DIR, filename), "utf8");
+      const file = resolveFile(filename, locale)!;
+      const raw = fs.readFileSync(file, "utf8");
       const { data, content } = matter(raw);
       return {
         slug: slugFromFilename(filename),
@@ -92,10 +122,14 @@ export function getAllNotes(): NoteMeta[] {
     .sort((a, b) => (a.date < b.date ? 1 : -1)); // mais recente primeiro
 }
 
-export function getNote(slug: string): Note | null {
-  const filename = readFilenames().find((f) => slugFromFilename(f) === slug);
+export function getNote(slug: string, locale: Locale = defaultLocale): Note | null {
+  const filename = filenamesWithFallback(locale).find(
+    (f) => slugFromFilename(f) === slug,
+  );
   if (!filename) return null;
-  const raw = fs.readFileSync(path.join(NOTES_DIR, filename), "utf8");
+  const file = resolveFile(filename, locale);
+  if (!file) return null;
+  const raw = fs.readFileSync(file, "utf8");
   const { data, content } = matter(raw);
   return {
     slug,

@@ -1,0 +1,20 @@
+---
+title: How N+1 and Big O turned a 1 minute report into 2.5 seconds
+description: "From about 1 minute to about 2.5 seconds: hunting down the bottleneck of a high volume report"
+date: 2026-08-18
+tags: [javascript, node.js, xlsx, streams]
+---
+
+Recently I got a task where an Excel report that generated between 11 thousand and 20 thousand rows was taking around 1 minute to be generated. Unfortunately these reports are synchronous, which means the client keeps looking at a loading screen until the report is finished. And it will certainly be necessary to implement some solution to make the reports asynchronous.
+
+Before any code I need to find where the bottlenecks are, so I instrumented the endpoint to separate a few things: database time, writing to the file and finishing up. Without these measurements I probably would not have found the bottleneck.
+
+According to the measurements, the database was not the bottleneck. The query time was not that bad for how complex it is. However, looking at the function I quickly spotted the famous **N+1**, and to my surprise, there were **2 N+1 problems**.
+
+The first one was in the function itself. Right after the main query ran and brought back several professionals, a second query ran for each professional to fetch other records. This is clearly an **O(n) operation**. I noticed this could be solved in the previous query, so I added a few lines of SQL to the main query and the **N+1** problem was solved. This cut the generation time a little, but it was still taking too long.
+
+I started to look more closely at the function and at what happened after I had the data returned by the query. I found some **mapper** functions that used a translation function (dictionary-i18n), and there it was again, another **N+1**. The translation function loaded dozens of tokens into memory (1200 tokens) and ran a loop looking for the token it received as a parameter. For each row of the report the function was called 7 times, that is, one more **O(n) operation**. I solved this by swapping the linear search for a direct **O(1)** access.
+
+This change in the translation function cut the report generation time by a lot, but I was still not happy. I changed a bit how the function was generated because it was not using streams properly. On top of that, I looked for some index that would help generating the report and there was not any index either.
+
+After a small refactor in the function, the creation of an index and fixing the 2 **N+1** problems, the time to generate the report with 11 thousand rows went down to **about 2.5 seconds** and the report with 20 thousand rows is generated in **about 4 seconds**.
