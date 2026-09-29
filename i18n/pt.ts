@@ -28,6 +28,8 @@ export const pt = {
   },
   notes: {
     title: "notes",
+    // Só para o <title>: "notes" sozinho ficaria igual nos dois locales.
+    metaTitle: "notes sobre javascript, node.js e performance",
     subtitle:
       "Um canto pra escrever sobre o que ando aprendendo e alguns problemas reais que já resolvi",
     empty: "Nada por aqui ainda.",

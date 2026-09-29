@@ -30,6 +30,7 @@ export const en: Dictionary = {
   },
   notes: {
     title: "notes",
+    metaTitle: "notes on javascript, node.js and performance",
     subtitle:
       "A corner to write about what I'm learning and some real problems solved",
     empty: "Nothing here yet.",

@@ -7,14 +7,24 @@ tags: [javascript, node.js, xlsx, streams]
 
 Recentemente recebi uma tarefa em que um relatório em Excel que gerava entre 11 mil a 20 mil linhas estava levando cerca de 1 minuto para ser gerado, infelizmente esses relatórios são síncronos, o que significa que o cliente fica vendo uma tela de loading até o relatório terminar. E com certeza será necessário implementar alguma solução para tornar os relatórios assíncronos.
 
+## Medindo antes de mexer
+
 Antes de qualquer código eu preciso identificar onde estão os gargalos, instrumentei o endpoint para separar algumas coisas: tempo de banco, escrita em arquivo e finalização. Sem essas métricas eu provavelmente não identificaria o gargalo.
 
 Segundo as métricas, o banco não era o gargalo, o tempo da query não estava tão ruim para a complexidade dela, porém, ao analisar a função logo identifiquei o famoso **N+1**, e para minha surpresa, eram **2 problemas de N+1**.
 
+## O primeiro N+1
+
 O primeiro estava na própria função, logo após a query principal executar trazendo vários profissionais, uma segunda query executava para cada profissional para buscar outros registros, isso é claramente uma **operação O(n)**. Percebi que isso poderia ser resolvido na query anterior, então adicionei algumas linhas de SQL na query principal e o problema do **N+1** estava resolvido. Isso reduziu um pouco o tempo de geração, mas ainda estava demorando muito tempo.
+
+## O segundo N+1
 
 Comecei a analisar melhor a função e o que acontecia depois de eu ter os dados retornados da query, encontrei algumas funções de **mapper** que utilizavam uma função de tradução (dictionary-i18n), e novamente estava lá outro **N+1**, a função de tradução carregava em memória dezenas de tokens (1200 tokens) e fazia uma operação de laço procurando o token recebido por parâmetro, para cada linha do relatório a função era chamada 7 vezes, ou seja, mais uma **operação O(n)**, resolvi isso trocando a busca linear por um acesso direto **O(1)**.
 
+## Streams e o índice
+
 Essa alteração na função de tradução reduziu bastante o tempo de geração do relatório, mas eu ainda não estava contente, alterei um pouco como a função era gerada pois não estava utilizando apropriadamente streams, além disso, procurei por algum índice que ajudasse a geração do relatório e também não índice algum.
+
+## Resultado
 
 Após uma pequena refatoração na função, criação de um índice, resolução dos 2 problemas de **N+1**, o tempo para gerar o relatório com 11 mil linhas foi para **~2,5 segundos** e o relatório com 20 mil linhas é gerado **~4 segundos**.

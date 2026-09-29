@@ -7,7 +7,7 @@ import { locales, isLocale, bcp47, type Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 import { ThemeScript } from "@/components/theme-script";
 import { JsonLd } from "@/components/json-ld";
-import { alternatesFor, FEED_PATH } from "@/lib/seo";
+import { alternatesFor, feedPathFor } from "@/lib/seo";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { FloatingNav } from "@/components/floating-nav";
@@ -55,7 +55,7 @@ export async function generateMetadata({
     ],
     alternates: {
       ...alternatesFor(locale, ""),
-      types: { "application/rss+xml": FEED_PATH },
+      types: { "application/rss+xml": feedPathFor(locale) },
     },
     openGraph: {
       title,

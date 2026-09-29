@@ -7,9 +7,13 @@ tags: [typescript, nodejs, streams, performance]
 
 Você já se perguntou como grandes empresas com milhões de registros geram relatórios o tempo todo sem que o sistema trave ou fique indisponível? Imagine uma fintech que precisa exibir relatórios num dashboard e, muitas vezes, enviá-los depois por e-mail ou para algum bucket.
 
+## O que são streams
+
 Então, como o uso de streams pode resolver isso sem comprometer o sistema? Streams são coleções de dados, assim como arrays e objetos. A diferença é que nem sempre estão disponíveis de uma vez e não precisam estar inteiramente alocados em memória (esse é o ponto-chave), eles chegam em chunks (pedaços), o que facilita trabalhar com grandes volumes de dados.
 
 O benefício é manter o uso de memória constante: como os dados não são carregados todos de uma vez, você não sobrecarrega o servidor nem trava o event-loop do JavaScript.
+
+## O código
 
 Como disse Linus Torvalds, "talk is cheap, show me the code", então vamos ao código.
 
@@ -31,9 +35,13 @@ async function* readRows(
 }
 ```
 
+## Lendo do banco
+
 O uso de workers com async jobs foi fundamental para o sistema. O worker é responsável por buscar os dados no MongoDB, que, por sinal, está num replica set, lendo dos secundários em vez do primário. Todos esses fatores contribuem para lidar de forma eficiente com grande volume de dados.
 
 Para controlar o fluxo de dados vindos do banco, uso dois métodos: .lean() e .cursor(). O primeiro evita a "hidratação" do Document do MongoDB num objeto JavaScript, o segundo traz os resultados em batches (lotes), que eu consumo como uma generator function.
+
+## Juntando tudo
 
 ```ts
 export async function generate(input: ReportInput, jobId: string) {
@@ -50,9 +58,13 @@ export async function generate(input: ReportInput, jobId: string) {
 
 Por fim, a função generate é quem amarra tudo. Ela não lê nem formata nada por conta própria, a função dela é conectar as coisas e deixar os dados fluírem.
 
+## O PassThrough
+
 Um detalhe bem importante é o PassThrough. No código eu tenho 2 coisas, o serializador que é responsável por transformar as linhas retornadas para algum formato de relatório (csv, pdf, etc), então ele precisa escrever e o upload para o bucket precisa ler algo (veja a imagem abaixo). O PassThrough é o stream que é os dois ao mesmo tempo. Pensa nele como um cano: o serializador escreve em uma ponta e o upload lê na outra.
 
 <Fig src="passthrough.png" alt="Diagrama do PassThrough como um cano: serializador escreve em uma ponta, upload lê na outra" />
+
+## Resultados
 
 Com todas essas estratégias, é possível gerar relatórios com ~1 milhão de linhas mantendo a memória praticamente constante. Criei um script para medir o pico de RAM, veja os resultados abaixo.
 
