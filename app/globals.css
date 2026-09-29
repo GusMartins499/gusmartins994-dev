@@ -270,6 +270,14 @@ body {
 /* ── Paleta de comandos (⌘K) ────────────────────────────────────────── */
 
 .palette-overlay {
+  /* `--palette-vh` / `--palette-top` espelham a viewport *visual* (a área
+     que sobra acima do teclado virtual) e são escritas pelo componente.
+     Sem suporte a visualViewport, `dvh` já serve. */
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: var(--palette-top, 0px);
+  height: var(--palette-vh, 100dvh);
   animation: palette-fade 0.14s ease-out;
 }
 .palette-panel {

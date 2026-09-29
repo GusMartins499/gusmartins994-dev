@@ -58,6 +58,8 @@ export function Palette({
   const [flash, setFlash] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
+  /** Onde o dedo/ponteiro encostou: separa toque de arrasto (scroll). */
+  const pressRef = useRef<{ x: number; y: number } | null>(null);
 
   const p = dict.palette;
 
@@ -276,8 +278,16 @@ export function Palette({
     return () => window.removeEventListener("keydown", onKey);
   }, [onChatPage]);
 
+  // No celular a paleta é o menu: focar o campo sobe o teclado e engole a
+  // lista antes da pessoa ler os comandos. Só damos foco automático onde há
+  // ponteiro fino (mouse/trackpad); no toque o teclado sobe quando ela
+  // realmente tocar no campo.
   useEffect(() => {
-    if (open) inputRef.current?.focus();
+    if (!open) return;
+    const fine =
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(pointer: fine)").matches;
+    if (fine) inputRef.current?.focus();
   }, [open]);
 
   // Trava o scroll do fundo enquanto a paleta está aberta.
@@ -287,6 +297,30 @@ export function Palette({
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = previous;
+    };
+  }, [open]);
+
+  // O teclado virtual encolhe a viewport visual sem mexer em `vh`/`dvh`:
+  // sem isso o diálogo continua dimensionado para a tela inteira e metade
+  // dele fica atrás do teclado. Espelhamos a viewport visual em variáveis
+  // CSS e a paleta se dimensiona por elas.
+  useEffect(() => {
+    if (!open) return;
+    const viewport = window.visualViewport;
+    if (!viewport) return;
+    const root = document.documentElement;
+    const apply = () => {
+      root.style.setProperty("--palette-vh", `${viewport.height}px`);
+      root.style.setProperty("--palette-top", `${viewport.offsetTop}px`);
+    };
+    apply();
+    viewport.addEventListener("resize", apply);
+    viewport.addEventListener("scroll", apply);
+    return () => {
+      viewport.removeEventListener("resize", apply);
+      viewport.removeEventListener("scroll", apply);
+      root.style.removeProperty("--palette-vh");
+      root.style.removeProperty("--palette-top");
     };
   }, [open]);
 
@@ -363,7 +397,7 @@ export function Palette({
 
       {open && (
         <div
-          className="palette-overlay fixed inset-0 z-50 flex items-start justify-center bg-base-100/70 px-3 pt-[8vh] backdrop-blur-sm sm:px-4 sm:pt-[12vh]"
+          className="palette-overlay z-50 flex items-start justify-center bg-base-100/70 px-3 pt-4 pb-3 backdrop-blur-sm sm:px-4 sm:pt-[12vh]"
           onClick={(event) => {
             if (event.target === event.currentTarget) close();
           }}
@@ -373,7 +407,7 @@ export function Palette({
             role="dialog"
             aria-modal="true"
             aria-label={p.title}
-            className="palette-panel flex max-h-[80vh] w-full max-w-2xl flex-col overflow-hidden rounded-box border border-base-300 bg-base-200 shadow-2xl"
+            className="palette-panel flex max-h-full w-full max-w-2xl flex-col overflow-hidden rounded-box border border-base-300 bg-base-200 shadow-2xl"
           >
             {/* chrome de janela de terminal */}
             <div className="flex items-center gap-2 border-b border-base-300 bg-base-300/30 px-3 py-1.5 text-xs text-faint">
@@ -422,7 +456,7 @@ export function Palette({
               id="palette-list"
               role="listbox"
               aria-label={p.title}
-              className="min-h-[9rem] flex-1 overflow-y-auto overscroll-contain p-2"
+              className="min-h-[6rem] flex-1 overflow-y-auto overscroll-contain p-2 sm:min-h-[9rem]"
             >
               {visible.length === 0 && (
                 <li className="px-3 py-6 text-center text-sm text-faint">
@@ -447,10 +481,32 @@ export function Palette({
                       id={`palette-${item.id}`}
                       role="option"
                       aria-selected={active}
-                      onClick={() => item.run()}
+                      onPointerDown={(event) => {
+                        pressRef.current = {
+                          x: event.clientX,
+                          y: event.clientY,
+                        };
+                      }}
+                      onClick={(event) => {
+                        // Rolar a lista com o dedo termina em `click` no item
+                        // sob ele. Só executa se o ponteiro praticamente não
+                        // andou entre o toque e o solte.
+                        const from = pressRef.current;
+                        pressRef.current = null;
+                        if (
+                          from &&
+                          Math.hypot(
+                            event.clientX - from.x,
+                            event.clientY - from.y,
+                          ) > 10
+                        ) {
+                          return;
+                        }
+                        item.run();
+                      }}
                       onMouseMove={() => setPicked(item.id)}
                       className={[
-                        "flex cursor-pointer items-center gap-3 rounded-field border-l-2 px-3 py-2.5 text-sm transition-colors",
+                        "flex cursor-pointer items-center gap-3 rounded-field border-l-2 px-3 py-3 text-sm transition-colors sm:py-2.5",
                         active
                           ? "border-primary bg-base-100 text-base-content"
                           : "border-transparent text-muted",
@@ -477,7 +533,7 @@ export function Palette({
             </ul>
 
             {/* legenda de teclado */}
-            <div className="flex items-center gap-4 border-t border-base-300 px-4 py-2.5 text-[0.7rem] text-faint">
+            <div className="hidden items-center gap-4 border-t border-base-300 px-4 py-2.5 text-[0.7rem] text-faint sm:flex">
               <span className="flex items-center gap-1.5">
                 <kbd className="rounded-field border border-base-300 px-1">
                   ↑↓
