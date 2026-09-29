@@ -389,13 +389,13 @@ export function Terminal({
 
         {/* sugestões iniciais — só antes da primeira pergunta */}
         {messages.length === 0 && systemLines.length === 0 && (
-          <ul className="mt-6 flex flex-wrap gap-2">
+          <ul className="mt-6 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
             {dict.chat.suggestions.map((s) => (
               <li key={s}>
                 <button
                   type="button"
                   onClick={() => submit(s)}
-                  className="rounded-field border border-base-300 bg-base-100 px-2.5 py-1 text-xs text-muted transition-colors hover:border-primary hover:text-primary"
+                  className="w-full rounded-field border border-base-300 bg-base-100 px-2.5 py-2 text-left text-xs text-muted transition-colors hover:border-primary hover:text-primary sm:w-auto sm:py-1"
                 >
                   {s}
                 </button>
