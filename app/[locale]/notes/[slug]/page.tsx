@@ -17,6 +17,10 @@ import { JsonLd } from "@/components/json-ld";
 import { CdUp } from "@/components/cd-up";
 import { alternatesFor, absoluteUrl } from "@/lib/seo";
 
+// O conjunto de notes é fechado no build: slug fora da lista é 404 estático,
+// sem invocar função. É isto que mantém o content/ fora do runtime.
+export const dynamicParams = false;
+
 export function generateStaticParams() {
   const notes = getAllNotes();
   return locales.flatMap((locale) =>

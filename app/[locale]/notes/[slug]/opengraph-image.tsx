@@ -4,6 +4,18 @@ import { getNote, formatDate } from "@/lib/notes";
 import { site } from "@/lib/site";
 import { isLocale } from "@/i18n/config";
 import { OgFrame, og, ogSize, loadOgFonts } from "@/components/og";
+import { getAllNotes } from "@/lib/notes";
+import { locales } from "@/i18n/config";
+
+// Pré-renderiza uma capa por note/locale. Sem isto a rota de imagem fica
+// dinâmica e leria o content/ em runtime — justamente o que lib/notes.ts
+// assume que não acontece.
+export function generateStaticParams() {
+  const notes = getAllNotes();
+  return locales.flatMap((locale) =>
+    notes.map((note) => ({ locale, slug: note.slug })),
+  );
+}
 
 export const alt = `${site.name} — notes`;
 export const size = ogSize;
