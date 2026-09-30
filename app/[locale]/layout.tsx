@@ -132,10 +132,14 @@ export default async function LocaleLayout({
   };
 
   return (
+    // `data-theme` fica fora do JSX de propósito: quem manda nele é o
+    // `ThemeScript`/`lib/theme` no DOM. Se o atributo viesse daqui, trocar de
+    // idioma (que remonta este layout em outro segmento `[locale]`) faria o
+    // React reescrever o valor e jogar o tema de volta pro padrão.
     <html
       lang={bcp47[typedLocale]}
-      data-theme="dark"
       className={jetbrainsMono.variable}
+      suppressHydrationWarning
     >
       <head>
         <ThemeScript />
