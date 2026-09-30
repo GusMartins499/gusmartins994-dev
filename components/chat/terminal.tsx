@@ -8,6 +8,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries";
 import type { Source } from "@/lib/chat/chunk";
+import { toggleTheme } from "@/lib/theme";
 import { Boot } from "./boot";
 import { Spinner } from "./spinner";
 import { Countdown } from "./countdown";
@@ -126,18 +127,10 @@ export function Terminal({
           setMessages([]);
           setSystemLines([]);
           return true;
-        case "theme": {
-          const root = document.documentElement;
-          const next =
-            root.getAttribute("data-theme") === "light" ? "dark" : "light";
-          root.setAttribute("data-theme", next);
-          try {
-            localStorage.setItem("theme", next);
-          } catch {
-            // modo privado / storage bloqueado: o tema só não persiste
-          }
+        case "theme":
+          // mesmo caminho do toggle do header e da paleta, pra não divergirem
+          toggleTheme();
           return true;
-        }
         case "lang":
           router.push(locale === "pt" ? "/en/chat" : "/pt/chat");
           return true;
