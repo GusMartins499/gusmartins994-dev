@@ -18,7 +18,7 @@ export default async function Image({
 }) {
   const { locale, slug } = await params;
   const l = isLocale(locale) ? locale : "pt";
-  const note = getNote(slug);
+  const note = getNote(slug, l);
   if (!note) notFound();
 
   // Títulos longos precisam de corpo menor p/ não estourar a moldura.
