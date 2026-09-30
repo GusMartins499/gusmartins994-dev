@@ -9,6 +9,13 @@ import { bcp47, defaultLocale, type Locale } from "@/i18n/config";
 // O mesmo post existe com o MESMO nome de arquivo em cada locale — é isso que
 // mantém o slug (e portanto a URL e o hreflang) igual entre /pt e /en. Post
 // ainda não traduzido cai no locale padrão em vez de sumir da listagem.
+//
+// O nome do arquivo é escrito em INGLÊS nas duas pastas, de propósito. Slug
+// por idioma daria url melhor em /pt, mas custa duas identidades por post
+// (o slug também indexa o href das fontes do chat) e obriga o slug do outro
+// idioma a subir até o LangToggle, que mora no layout e só conhece o locale
+// — nunca o slug da rota. Uma identidade, em inglês, é o lado barato do
+// tradeoff: os termos técnicos já eram ingleses antes.
 
 const NOTES_ROOT = path.join(process.cwd(), "content", "notes");
 
