@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { JetBrains_Mono } from "next/font/google";
 import { notFound } from "next/navigation";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "../globals.css";
 import { site, socials, stack } from "@/lib/site";
 import { locales, isLocale, bcp47, type Locale } from "@/i18n/config";
@@ -162,6 +164,8 @@ export default async function LocaleLayout({
           backHomeLabel={dict.a11y.backHome}
           scrollTopLabel={dict.a11y.scrollTop}
         />
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
