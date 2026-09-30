@@ -17,6 +17,13 @@ import { bcp47, defaultLocale, type Locale } from "@/i18n/config";
 // — nunca o slug da rota. Uma identidade, em inglês, é o lado barato do
 // tradeoff: os termos técnicos já eram ingleses antes.
 
+// Os dois readFileSync daqui levam `turbopackIgnore: true`. O caminho é
+// montado em runtime (locale + filename), então o file tracing não consegue
+// provar o que é lido e, por garantia, arrastaria o projeto inteiro para o
+// bundle do servidor. Ignorar é seguro porque nada disto roda em runtime:
+// toda rota que chama estas funções é pré-renderizada no build (as notes
+// têm `dynamicParams = false`) e o /api/chat lê um JSON pré-gerado, não o
+// content/.
 const NOTES_ROOT = path.join(process.cwd(), "content", "notes");
 
 function dirFor(locale: Locale): string {
@@ -115,7 +122,7 @@ export function getAllNotes(locale: Locale = defaultLocale): NoteMeta[] {
   return filenamesWithFallback(locale)
     .map((filename) => {
       const file = resolveFile(filename, locale)!;
-      const raw = fs.readFileSync(file, "utf8");
+      const raw = fs.readFileSync(/*turbopackIgnore: true*/ file, "utf8");
       const { data, content } = matter(raw);
       return {
         slug: slugFromFilename(filename),
@@ -136,7 +143,7 @@ export function getNote(slug: string, locale: Locale = defaultLocale): Note | nu
   if (!filename) return null;
   const file = resolveFile(filename, locale);
   if (!file) return null;
-  const raw = fs.readFileSync(file, "utf8");
+  const raw = fs.readFileSync(/*turbopackIgnore: true*/ file, "utf8");
   const { data, content } = matter(raw);
   return {
     slug,
