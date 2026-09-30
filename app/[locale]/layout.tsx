@@ -6,6 +6,7 @@ import { site, socials, stack } from "@/lib/site";
 import { locales, isLocale, bcp47, type Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 import { ThemeScript } from "@/components/theme-script";
+import { ThemeSync } from "@/components/theme-sync";
 import { JsonLd } from "@/components/json-ld";
 import { alternatesFor, feedPathFor } from "@/lib/seo";
 import { Header } from "@/components/header";
@@ -133,9 +134,9 @@ export default async function LocaleLayout({
 
   return (
     // `data-theme` fica fora do JSX de propósito: quem manda nele é o
-    // `ThemeScript`/`lib/theme` no DOM. Se o atributo viesse daqui, trocar de
-    // idioma (que remonta este layout em outro segmento `[locale]`) faria o
-    // React reescrever o valor e jogar o tema de volta pro padrão.
+    // `ThemeScript`/`lib/theme` no DOM, já que o tema só existe no cliente.
+    // Trocar de idioma remonta este layout e o React limpa os atributos do
+    // <html> nesse caminho — quem repõe é o `ThemeSync`, abaixo.
     <html
       lang={bcp47[typedLocale]}
       className={jetbrainsMono.variable}
@@ -147,6 +148,7 @@ export default async function LocaleLayout({
         <JsonLd data={websiteLd} />
       </head>
       <body className="min-h-dvh bg-base-100 text-base-content antialiased">
+        <ThemeSync />
         <a href="#conteudo" className="skip-link">
           {dict.a11y.skip}
         </a>
