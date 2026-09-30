@@ -9,7 +9,7 @@ import { NoteCard } from "@/components/note-card";
 import { CdUp } from "@/components/cd-up";
 import { ListKeyboard } from "@/components/list-keyboard";
 import { JsonLd } from "@/components/json-ld";
-import { alternatesFor, FEED_PATH, absoluteUrl } from "@/lib/seo";
+import { alternatesFor, feedPathFor, absoluteUrl } from "@/lib/seo";
 
 export async function generateMetadata({
   params,
@@ -20,14 +20,14 @@ export async function generateMetadata({
   if (!isLocale(locale)) return {};
   const dict = getDictionary(locale);
   return {
-    title: dict.notes.title,
+    title: dict.notes.metaTitle,
     description: dict.notes.subtitle,
     alternates: {
       ...alternatesFor(locale, "/notes"),
-      types: { "application/rss+xml": FEED_PATH },
+      types: { "application/rss+xml": feedPathFor(locale) },
     },
     openGraph: {
-      title: dict.notes.title,
+      title: dict.notes.metaTitle,
       description: dict.notes.subtitle,
       url: absoluteUrl(`/${locale}/notes`),
       siteName: site.name,
@@ -36,7 +36,7 @@ export async function generateMetadata({
     },
     twitter: {
       card: "summary_large_image",
-      title: dict.notes.title,
+      title: dict.notes.metaTitle,
       description: dict.notes.subtitle,
     },
   };
