@@ -27,7 +27,6 @@ export const projects: Project[] = [
     },
     stack: ["javascript", "node.js", "redis", "react", "docker"],
     repo: "https://github.com/GusMartins499/delivery-tracking",
-    featured: true,
   },
   {
     name: "tech-calendar-brazil",
@@ -37,6 +36,25 @@ export const projects: Project[] = [
     },
     stack: ["typescript", "next.js", "docker", "k8s", "Google APIs"],
     repo: "https://github.com/GusMartins499/tech-calendar-brazil",
+  },
+  {
+    name: "rotina",
+    description: {
+      pt: "Organizador de rotina semanal onde remanejar custa um arrasto",
+      en: "Weekly routine planner where rescheduling costs a single drag",
+    },
+    stack: ["typescript", "next.js", "react", "drizzle", "sqlite"],
+    repo: "https://github.com/GusMartins499/rotina",
+    featured: true,
+  },
+  {
+    name: "doca",
+    description: {
+      pt: "Dock nativo para Linux com perfis por ambiente e widgets ao vivo",
+      en: "Native Linux dock with per-environment profiles and live widgets",
+    },
+    stack: ["rust", "gtk3", "x11", "d-bus", "shell"],
+    repo: "https://github.com/GusMartins499/doca",
     featured: true,
   },
 ];
