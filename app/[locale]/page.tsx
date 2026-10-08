@@ -10,6 +10,7 @@ import { ProjectCard } from "@/components/project-card";
 import { NoteCard } from "@/components/note-card";
 import { TagList } from "@/components/tag";
 import { KbdShortcut } from "@/components/kbd-shortcut";
+import { HeroCircuit } from "@/components/hero-circuit";
 
 export default async function Home({
   params,
@@ -33,7 +34,12 @@ export default async function Home({
   return (
     <div className="space-y-20">
       {/* Hero / about */}
-      <section aria-labelledby="whoami" className="py-8 sm:py-14">
+      <section
+        aria-labelledby="whoami"
+        className="relative py-8 sm:py-14"
+      >
+        <HeroCircuit />
+
         <p className="text-sm text-faint">
           <span className="text-primary">~/{site.handle}</span>
           {" $ "}

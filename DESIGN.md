@@ -156,6 +156,96 @@ Tokens `--grid` e `--grid-major` por tema, em `app/globals.css`.
 > decorado competindo com conteúdo simples. A regra que sobrou é **o fundo
 > sustenta o conteúdo, não disputa com ele**.
 
+> A grade já virou **pontos** uma vez, pra não colidir com o traçado da
+> hero — os dois eram a mesma espécie visual (linha ortogonal fina, mesmo
+> eixo, cotovelo caindo em cruzamento) e o olho não separava figura de
+> fundo. Voltou atrás: mudava o site inteiro pra resolver uma colisão que
+> só existe em duas faixas de margem.
+>
+> **Colisão local se resolve local.** O `.hero-circuit` pinta uma clareira
+> — um radial de `base-100` por cima da grade, que está uma camada abaixo —
+> e o traçado passa a morar em fundo liso, como na referência. A grade
+> continua sendo a grade em todo o resto do site.
+
+### Traçado da hero
+
+Nas margens que a medida de leitura (`max-w-3xl`) deixa sobrando no desktop,
+dois painéis de traços ortogonais de canto arredondado — planta de pipeline —
+com um pulso vermelho descendo cada traço de tempos em tempos.
+
+Referência confessa: a hero do `woovi.com/baas`, onde um canvas three.js
+desenha um esquemático de PCB com pulsos e rótulos de transação ao vivo. O
+que se aproveitou foi a ideia, não a técnica: SVG estático mais duas
+animações de CSS dão a mesma leitura sem um byte de JavaScript.
+
+O que foi deixado de fora de propósito:
+
+- **Os rótulos.** Lá eles contam a história do produto (`PIX APROVADO
+  R$ 59,90`). Aqui seria monoespaçada atrás de monoespaçada — ruído que
+  parece erro de renderização.
+- **WebGL.** Um canvas de 1730×711 rodando sempre cobra bateria e bundle
+  por um fundo que ninguém olha de frente.
+
+O que se aproveitou e não era óbvio: lá o esquemático mora em navy liso.
+Daí a clareira — sem apagar a grade embaixo dele, não há traçado que se
+leia, por mais alfa que se jogue.
+
+Os dials, todos em `app/globals.css`:
+
+| o quê | valor | efeito |
+| ----- | ----- | ------ |
+| `--circuit` | `0.26` / `0.24` | peso do traço parado, sobre a clareira |
+| `.circuit-pulse-core` | `0.9` · 2px | o risco nítido |
+| `.circuit-pulse-halo` | `0.16` · 7px | o halo que faz ler como luz, e não como linha vermelha deslizando |
+| `stroke-dasharray` | `40 1160` | risco de ~7% do caminho, num padrão 2x o caminho: atravessa em metade do ciclo, silêncio na outra metade |
+| `--pulse-dur` | 11s / 13s / 17s | primas entre si, pros três traços nunca sincronizarem |
+
+O halo sai de uma segunda `path`, não de `filter: drop-shadow` — num elemento
+animado o filtro seria recalculado a cada quadro.
+
+`prefers-reduced-motion` tira o pulso e deixa só o traço parado; abaixo de
+`lg` a camada não existe.
+
+### Divisória do rodapé
+
+O traçado da hero deitado, mas sem inventar uma linha nova: é o próprio
+`border-t` que o rodapé sempre teve, agora com um pulso de 180px correndo
+por ele pelo `background-position`. Parado, é a mesma linha de `base-300`
+de antes.
+
+Mesmo princípio da hero: **onde a animação está, a grade não aparece.** Uma
+faixa de 140px pinta `base-100` por cima da grade. Margens negativas
+devolvem a altura, então a linha fica onde a borda de 1px ficava.
+
+A clareira vai de ponta a ponta e desvanece **só na vertical**. A primeira
+versão era um radial de 72% da largura, como o da hero: ele cortava as
+verticais da grade no meio da tela mas não nas pontas, e a borda desse
+corte lia como um retângulo no meio do papel. Clareira larga e baixa não
+se comporta como clareira alta e estreita — sem queda horizontal não há
+canto pra ver, e todas as verticais morrem na mesma transição.
+
+O desvanecimento é máscara, não degradê de cor: interpolar até
+`transparent` passa por preto transparente e deixaria uma faixa
+acinzentada nas bordas.
+
+> Antes disso teve um barramento separado entre os notes e o rodapé, com o
+> prompt `~/gusmartins $` embaixo. Ficou esquisito por acúmulo: a linha
+> nova, mais o `border-t` do rodapé logo abaixo, mais as horizontais da
+> grade atrás — três sistemas de linha no mesmo palmo de tela — e um
+> segundo cursor piscando em cima do `~ $` que o rodapé já tinha.
+>
+> A regra que ficou: **não somar elemento onde já existe um fazendo o
+> mesmo papel.** A divisória já estava lá; era ela que precisava ganhar
+> vida, não uma linha a mais.
+
+O ciclo é de 14s e o pulso atravessa em 45% dele — os outros 55% a linha
+fica parada. O rodapé está em todas as rotas, e uma linha correndo sem
+pausa no pé de toda página fica inquieta. É a cadência intervalada do
+traçado da hero por outro caminho: lá é o padrão do dash, aqui é um platô
+no keyframe.
+
+`prefers-reduced-motion` deixa a divisória parada.
+
 ## Estrutura de conteúdo (como "alimentar" o site)
 
 Conteúdo mora no repositório — adicionar = criar/editar arquivo e dar `git push`.
