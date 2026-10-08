@@ -6,7 +6,15 @@ export function Footer({ dict }: { dict: Dictionary }) {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="mt-20 border-t border-base-300">
+    <footer className="mt-20">
+      {/* A divisória do rodapé é o barramento: uma linha só, que é ao mesmo
+          tempo a borda que sempre existiu e o lugar por onde o pulso passa.
+          A faixa em volta apaga a grade, senão a linha vira mais uma
+          horizontal no meio de várias. */}
+      <div className="footer-rule" aria-hidden="true">
+        <div className="footer-bus" />
+      </div>
+
       <div className="mx-auto max-w-3xl px-4 py-10">
         <p className="mb-5 text-sm text-primary">### {dict.footer.contact}</p>
 

@@ -135,7 +135,7 @@ export default async function NotePage({
       <ReadingProgress />
       <CdUp />
 
-      <div className="mt-6 mb-8 border-b border-base-300 pb-6">
+      <div className="mt-6 mb-8 pb-6">
         <h1 className="mb-2 text-2xl font-medium text-base-content">
           {note.title}
         </h1>
@@ -218,7 +218,7 @@ export default async function NotePage({
       {(newer || older) && (
         <nav
           aria-label={dict.notes.title}
-          className="mt-14 grid grid-cols-1 gap-4 border-t border-base-300 pt-8 sm:grid-cols-2"
+          className="mt-14 grid grid-cols-1 gap-4 sm:grid-cols-2"
         >
           {newer ? (
             <Link

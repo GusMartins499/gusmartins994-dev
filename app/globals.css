@@ -174,7 +174,12 @@ html {
 /* Uma camada só, atrás do conteúdo. Duas escalas (fina de 32px, forte a
    cada 128px) dão à grade uma hierarquia que uma escala só não tem — é o
    que a faz parecer papel milimetrado em vez de ruído. Nada de brilho,
-   vinheta ou scanline: o fundo sustenta o conteúdo, não compete com ele. */
+   vinheta ou scanline: o fundo sustenta o conteúdo, não compete com ele.
+
+   Esta grade já virou pontos uma vez, pra não colidir com o traçado da
+   hero. Era remédio no lugar errado: mudava o site inteiro pra resolver
+   uma colisão que só existe nas margens da hero. A colisão se resolve lá,
+   com a clareira do `.hero-circuit`. */
 
 [data-theme="dark"] {
   --grid: rgba(236, 231, 223, 0.035);
@@ -189,7 +194,9 @@ body::before {
   content: "";
   position: fixed;
   inset: 0;
-  z-index: -1;
+  /* -2 para o traçado da hero (-1) passar por cima. Antes a grade era quem
+     pintava em cima da animação. */
+  z-index: -2;
   pointer-events: none;
   background:
     linear-gradient(var(--grid-major) 1px, transparent 1px) 0 0 / 128px 128px,
@@ -219,6 +226,199 @@ body::before {
 body {
   position: relative;
   isolation: isolate;
+}
+
+/* ── Traçado da hero (componente HeroCircuit) ───────────────────────── */
+
+/* Vive só nas margens laterais, que é espaço que a medida de leitura
+   (max-w-3xl) deixa sobrando no desktop. A largura é o que sobra de fato:
+   metade da viewport menos metade da seção, menos a margem. Abaixo de `lg`
+   não sobra nada e a camada nem existe. */
+
+[data-theme="dark"] {
+  --circuit: rgba(236, 231, 223, 0.26);
+}
+[data-theme="light"] {
+  --circuit: rgba(26, 26, 26, 0.24);
+}
+
+.hero-circuit {
+  display: none;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: -1;
+  align-items: center;
+  overflow: hidden;
+  pointer-events: none;
+  /* 50% = metade da seção; o -4rem é folga que também absorve a barra de
+     rolagem embutida no 50vw, pra nunca nascer scroll horizontal. */
+  width: max(0px, calc(50vw - 50% - 4rem));
+  /* A clareira: apaga a grade localmente pintando o fundo da página por
+     cima dela (a grade é z-index -2, isto é -1). É o que a Woovi tem de
+     graça — lá o esquemático mora em navy liso. Sem isso, traço e grade
+     são a mesma espécie visual e o olho não separa figura de fundo. */
+  background: radial-gradient(
+    130% 82% at 50% 50%,
+    var(--color-base-100) 48%,
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent,
+    #000 30%,
+    #000 70%,
+    transparent
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    #000 30%,
+    #000 70%,
+    transparent
+  );
+}
+
+@media (width >= 64rem) {
+  .hero-circuit { display: flex; }
+}
+
+/* Máscara vertical no próprio svg: duas máscaras em elementos diferentes
+   evita depender de mask-composite. */
+.hero-circuit-svg {
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent,
+    #000 22%,
+    #000 78%,
+    transparent
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent,
+    #000 22%,
+    #000 78%,
+    transparent
+  );
+}
+
+/* O pulso: um risco de 40 unidades num padrão de 1200 sobre um caminho
+   normalizado em 600. Como o padrão é 2x o caminho, o pulso atravessa
+   durante metade do ciclo e a outra metade é silêncio — ainda intervalado,
+   mas vivo o bastante pra se notar sem estar encarando.
+
+   Risco, não ponto: 40 de 600 é ~7% do caminho, o suficiente pra ler como
+   algo correndo pelo traço em vez de um tique vermelho. */
+.circuit-pulse {
+  stroke-dasharray: 40 1160;
+  stroke-dashoffset: 1200;
+  animation: circuit-run var(--pulse-dur, 13s) linear var(--pulse-delay, 0s)
+    infinite;
+}
+@keyframes circuit-run {
+  to { stroke-dashoffset: 0; }
+}
+
+/* Duas camadas no mesmo compasso: um halo largo e apagado por baixo, o
+   risco nítido por cima. É o que faz o pulso ler como luz passando em vez
+   de linha vermelha deslizando — e sai por duas paths, sem `filter`, que
+   num elemento animado recalcularia o filtro a cada quadro. */
+.circuit-pulse-halo { opacity: 0.16; }
+.circuit-pulse-core { opacity: 0.9; }
+
+/* ── Divisória do rodapé (componente Footer) ────────────────────────── */
+
+/* O traçado da hero deitado, mas sem inventar uma linha nova: é o próprio
+   `border-t` que o rodapé sempre teve, agora com um pulso passando. A lição
+   veio de errar antes — um barramento separado acima da borda do rodapé,
+   com a grade atrás, empilhava três sistemas de linha horizontal no mesmo
+   palmo de tela.
+
+   Mesmo princípio da hero: onde a animação está, a grade não aparece. A
+   faixa pinta `base-100` por cima da grade (que é z-index -2; esta faixa é
+   conteúdo em fluxo, já pinta acima).
+
+   A clareira vai de ponta a ponta e desvanece *só na vertical*. Uma versão
+   anterior usava um radial de 72% da largura: ele cortava as verticais da
+   grade no meio da tela mas não nas pontas, e a borda desse corte lia como
+   um retângulo. Sem queda horizontal não existe canto pra ver — todas as
+   verticais morrem na mesma transição suave.
+
+   O desvanecimento é máscara, não degradê de cor: interpolar até
+   `transparent` passa por preto transparente e deixa uma faixa acinzentada
+   nas bordas. Máscara interpola só alfa. */
+.footer-rule {
+  position: relative;
+  display: flex;
+  align-items: center;
+  /* alta e macia: o opaco vive a ~12px da linha e a transição se estende
+     por quase 60px de cada lado, longe demais pra o olho achar a borda.
+     Não pode passar de 160px: as margens negativas sangram metade disso
+     pra cima, e lá só existem os 80px do `mt-20` antes do conteúdo. */
+  height: 140px;
+  margin-top: -70px;
+  margin-bottom: -70px;
+  pointer-events: none;
+  background: var(--color-base-100);
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    #000 42%,
+    #000 58%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    #000 42%,
+    #000 58%,
+    transparent 100%
+  );
+}
+
+/* A linha: `base-300` parada, que é a cor que a borda sempre teve, com um
+   degradê de 180px correndo por cima pelo `background-position`. O degradê
+   já traz o halo nas pontas — não precisa da segunda camada que o traçado
+   da hero usa. */
+.footer-bus {
+  width: 100%;
+  height: 1px;
+  background:
+    linear-gradient(
+        90deg,
+        transparent 0%,
+        color-mix(in srgb, var(--color-primary) 35%, transparent) 35%,
+        var(--color-primary) 50%,
+        color-mix(in srgb, var(--color-primary) 35%, transparent) 65%,
+        transparent 100%
+      )
+      no-repeat,
+    var(--color-base-300);
+  background-size: 180px 100%;
+  animation: footer-bus-run 14s linear infinite;
+}
+
+/* Atravessa em 45% do ciclo e descansa nos outros 55%. O rodapé está em
+   todas as rotas — uma linha correndo sem pausa no pé de toda página fica
+   inquieta. Mesma cadência intervalada do traçado da hero, por outro
+   caminho: lá é o padrão do dash, aqui é um platô no keyframe. */
+@keyframes footer-bus-run {
+  0%   { background-position: -180px 0; }
+  45%  { background-position: calc(100% + 180px) 0; }
+  100% { background-position: calc(100% + 180px) 0; }
+}
+
+/* Sem o pulso sobra a divisória parada — que é o que o rodapé precisa ser
+   de qualquer jeito. A regra global de duração não serviria: congelaria a
+   faixa em algum ponto do percurso. */
+@media (prefers-reduced-motion: reduce) {
+  .footer-bus { animation: none; background-image: none; }
+}
+
+/* Quem pede menos movimento fica só com o traço parado. Não dá pra confiar
+   na regra global de duração aqui: ela congelaria o pulso aceso. */
+@media (prefers-reduced-motion: reduce) {
+  .circuit-pulse { display: none; }
 }
 
 /* ── Chat / terminal ────────────────────────────────────────────────── */
