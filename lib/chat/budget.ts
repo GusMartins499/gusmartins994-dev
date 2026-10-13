@@ -48,11 +48,55 @@ export const LIMITS = {
   historyWindow: 3,
   /** Tamanho máximo de uma pergunta, em chars. */
   maxQuestionChars: 500,
+  /**
+   * Teto de cada mensagem do histórico, em chars.
+   *
+   * O histórico vem do cliente e nada garante que é o que o modelo
+   * respondeu de verdade. 3.000 cobre com folga uma resposta legítima
+   * (600 tokens ≈ 2.400 chars) e corta o que passar disso.
+   */
+  maxHistoryMessageChars: 3_000,
 } as const;
 
-export type BudgetVerdict =
-  | { ok: true; remainingToday: number }
-  | { ok: false; reason: "day" | "minute" | "ip"; retryAfter: number };
+export type Refusal = {
+  ok: false;
+  reason: "day" | "minute" | "ip";
+  retryAfter: number;
+};
+
+/**
+ * Tokens reservados para uma pergunta. Guarda as chaves da janela em que a
+ * reserva foi feita: o acerto no fim do stream tem que cair na mesma janela,
+ * mesmo que o minuto (ou o dia) já tenha virado.
+ */
+export type Reservation = {
+  tokens: number;
+  dayKey: string;
+  minuteKey: string;
+};
+
+export type ReserveVerdict =
+  | { ok: true; reservation: Reservation }
+  | Refusal;
+
+/**
+ * Estimativa de tokens a partir do texto.
+ *
+ * "chars ÷ 4" vale para inglês e português, mas CJK e emoji saem perto de
+ * um token por caractere, ou mais. Dividir tudo por 4 deixaria um atacante
+ * passar 4× mais token do que a estimativa diz. Então caractere fora do
+ * ASCII conta um token inteiro. Exagera um pouco nos acentos do português,
+ * e não tem problema: o acerto real vem depois, em `settle`.
+ */
+export function estimateTokens(text: string): number {
+  let ascii = 0;
+  let other = 0;
+  for (const char of text) {
+    if (char.charCodeAt(0) < 128) ascii++;
+    else other++;
+  }
+  return Math.ceil(ascii / 4) + other;
+}
 
 const redis =
   process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
@@ -111,39 +155,78 @@ async function incr(key: string, by: number, ttl: number): Promise<number> {
 }
 
 /**
- * Checa se cabe mais uma pergunta. Chamado ANTES de falar com o Groq,
- * usando uma estimativa; o consumo real é gravado depois por `recordUsage`.
+ * Conta a pergunta no limite por IP. É a primeira coisa da rota, antes de
+ * qualquer chamada externa: o embedding do Gemini também custa cota, e um
+ * IP bloqueado não pode continuar chamando ele.
+ *
+ * Incrementa e só depois compara. Ler e incrementar em dois passos deixaria
+ * uma rajada em paralelo passar inteira pela leitura antes do primeiro
+ * incremento.
  */
-export async function checkBudget(
-  ip: string,
-  estimatedTokens: number,
-): Promise<BudgetVerdict> {
-  const [day, minute, ipCount] = await Promise.all([
-    get(dayKey()),
-    get(minuteKey()),
-    get(ipKey(ip)),
-  ]);
-
-  if (!skipIpLimit && ipCount >= LIMITS.asksPerIpPerHour) {
+export async function checkIp(ip: string): Promise<{ ok: true } | Refusal> {
+  if (skipIpLimit) return { ok: true };
+  const count = await incr(ipKey(ip), 1, 3_600);
+  if (count > LIMITS.asksPerIpPerHour) {
     return { ok: false, reason: "ip", retryAfter: secondsToNextHour() };
   }
-  if (day + estimatedTokens > LIMITS.tokensPerDay) {
-    return { ok: false, reason: "day", retryAfter: secondsToMidnightUTC() };
-  }
-  if (minute + estimatedTokens > LIMITS.tokensPerMinute) {
-    return { ok: false, reason: "minute", retryAfter: secondsToNextMinute() };
-  }
-
-  await incr(ipKey(ip), 1, 3_600);
-  return { ok: true, remainingToday: LIMITS.tokensPerDay - day };
+  return { ok: true };
 }
 
-/** Grava o consumo REAL, vindo do onFinish do streamText. */
-export async function recordUsage(totalTokens: number): Promise<void> {
-  if (!Number.isFinite(totalTokens) || totalTokens <= 0) return;
+/**
+ * Reserva a estimativa nos contadores globais ANTES de chamar o Groq.
+ *
+ * Antes a rota lia os contadores e só gravava o consumo no fim do stream.
+ * No meio disso, qualquer número de requisições em paralelo passava pela
+ * mesma leitura, e uma requisição abortada nunca gravava nada. Com a reserva,
+ * o token conta na hora: se a soma passar do teto, a reserva é desfeita e a
+ * pergunta, recusada.
+ */
+export async function reserveTokens(tokens: number): Promise<ReserveVerdict> {
+  const reservation: Reservation = {
+    tokens,
+    dayKey: dayKey(),
+    minuteKey: minuteKey(),
+  };
+
+  const [day, minute] = await Promise.all([
+    incr(reservation.dayKey, tokens, 86_400),
+    incr(reservation.minuteKey, tokens, 120),
+  ]);
+
+  const overDay = day > LIMITS.tokensPerDay;
+  const overMinute = minute > LIMITS.tokensPerMinute;
+  if (!overDay && !overMinute) return { ok: true, reservation };
+
+  await release(reservation);
+  return overDay
+    ? { ok: false, reason: "day", retryAfter: secondsToMidnightUTC() }
+    : { ok: false, reason: "minute", retryAfter: secondsToNextMinute() };
+}
+
+/**
+ * Troca a reserva pelo consumo REAL, vindo do onFinish do streamText.
+ *
+ * Só roda quando o stream termina. Se a requisição for abortada ou der erro,
+ * a reserva fica como está: na dúvida, conta-se o token como gasto.
+ */
+export async function settle(
+  reservation: Reservation,
+  totalTokens: number | undefined,
+): Promise<void> {
+  if (totalTokens === undefined || !Number.isFinite(totalTokens)) return;
+  const delta = totalTokens - reservation.tokens;
+  if (delta === 0) return;
   await Promise.all([
-    incr(dayKey(), totalTokens, 86_400),
-    incr(minuteKey(), totalTokens, 120),
+    incr(reservation.dayKey, delta, 86_400),
+    incr(reservation.minuteKey, delta, 120),
+  ]);
+}
+
+/** Desfaz uma reserva inteira: a pergunta não chegou a gastar token. */
+export async function release(reservation: Reservation): Promise<void> {
+  await Promise.all([
+    incr(reservation.dayKey, -reservation.tokens, 86_400),
+    incr(reservation.minuteKey, -reservation.tokens, 120),
   ]);
 }
 
