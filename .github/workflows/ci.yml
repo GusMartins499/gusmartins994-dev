@@ -36,3 +36,57 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  # E2E com Playwright contra o build de produção (`next start`). Roda depois
+  # do `check` para não gastar minuto testando código que nem compila. Não
+  # precisa de segredo: o chat roda em modo mock (ver playwright.config.ts).
+  e2e:
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Instala dependências
+        run: npm ci
+
+      - name: Versão do Playwright
+        id: playwright
+        run: echo "version=$(npx playwright --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
+
+      - name: Cache dos browsers do Playwright
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+
+      - name: Instala o Chromium
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+
+      - name: Instala as dependências de sistema do Chromium
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+
+      - name: Build
+        run: npm run build
+        env:
+          GROQ_API_KEY: ""
+          GOOGLE_GENERATIVE_AI_API_KEY: ""
+
+      - name: E2E
+        run: npx playwright test
+
+      - name: Relatório do Playwright
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
