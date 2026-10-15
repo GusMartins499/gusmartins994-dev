@@ -80,22 +80,22 @@ test.describe("páginas públicas", () => {
 
 test.describe("404", () => {
   for (const locale of locales) {
-    for (const path of [`/${locale}/notes/nao-existe`, `/${locale}/rota-inexistente`]) {
+    for (const path of [
+      `/${locale}/notes/nao-existe`,
+      `/${locale}/rota-inexistente`,
+      `/${locale}/varios/niveis/inexistentes`,
+    ]) {
       test(`${path} responde 404`, async ({ request }) => {
         const response = await request.get(path, { maxRedirects: 0 });
         expect(response.status()).toBe(404);
       });
 
       test(`${path} mostra o caminho que falhou`, async ({ page }) => {
-        // BUG conhecido: url sem rota (e slug fora do generateStaticParams)
-        // cai na 404 padrão do Next, não no app/[locale]/not-found.tsx.
-        // Quando a correção entrar este teste passa e o test.fail() acusa.
-        test.fail();
         await page.goto(path);
         await expect(page.getByRole("heading", { level: 1, name: "404" })).toBeVisible();
         await expect(
           page.getByText(`cd: ${path}: ${getDictionary(locale).notFound.reason}`),
-        ).toBeVisible({ timeout: 2_000 });
+        ).toBeVisible();
       });
     }
   }
