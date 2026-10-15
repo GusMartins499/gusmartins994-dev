@@ -1,0 +1,62 @@
+---
+title: "O CNPJ ganhou letras. E agora?"
+description: "CNPJ alfanumérico: o que quebra no código, o dígito verificador e a validação via API"
+date: 2026-10-15
+tags: [javascript, cnpj, api]
+---
+
+## Introdução
+
+Desde julho de 2026 a Receita Federal começou a emitir CNPJs alfanuméricos. O formato continua com 14 posições, mas as 12 primeiras podem ter letras: 12.ABC.345/01DE-35 é um CNPJ válido. Os CNPJs numéricos continuam valendo, e os dois formatos vão conviver por muitos anos.
+
+Parece uma mudança pequena. Na prática, ela quebra muitas suposições que estão espalhadas pelo código há décadas. Nesta semana adaptei os cadastros de empresas da plataforma em que trabalho e aproveitei para validar o CNPJ direto na base pública da Receita. Compartilho aqui o que aprendi.
+
+## 1. O que quebra quando o CNPJ deixa de ser número
+
+Antes de escrever código, fiz um levantamento de onde o CNPJ aparecia. O banco foi a boa notícia: a coluna já era texto, então não precisei de migration. O problema estava nas camadas de cima: máscaras de input que só aceitavam dígitos, bibliotecas de validação que não aceitam o formato novo e normalizações silenciosas tipo `cnpj.replace(/\D/g, '')`. Isso não dá erro, apaga as letras e o CNPJ chega truncado no banco de dados sem ninguém perceber.
+
+## 2. O dígito verificador continua sendo módulo 11, com um detalhe
+
+### O cálculo com ASCII menos 48
+
+O algoritmo é o mesmo de sempre. A única diferença é o valor de cada caractere: o código ASCII menos 48. Assim, '0' a '9' continuam valendo 0 a 9, e 'A' passa a valer 17.
+
+```js
+const calculateDv = (base, weights) => {
+  const sum = weights.reduce(
+    (acc, weight, index) => acc + (base.charCodeAt(index) - 48) * weight,
+    0
+  )
+  const rest = sum % 11
+
+  return rest < 2 ? 0 : 11 - rest
+}
+```
+
+### Formato e registros legados
+
+Os 2 dígitos verificadores continuam sempre numéricos. A regex de formato fica `^[A-Z0-9]{12}\d{2}$`, sempre depois de normalizar: tirar a pontuação e passar para maiúsculas. Uma decisão importante foi não revalidar o CNPJ de registros antigos quando ele não muda numa edição. Sistemas legados costumam ter CNPJs inválidos no banco, e bloquear a edição desses cadastros criaria um problema que não existia antes.
+
+## 3. Validar via API
+
+Além do formato, a tarefa pedia para confirmar se a empresa existe e está ATIVA na Receita. Testei seis APIs públicas de consulta com um CNPJ numérico e um alfanumérico, e todas responderam bem ao numérico. Com o alfanumérico, algumas responderam 404 limpo, outras devolveram erro 500 ou 503. Ou seja, elas ainda não estavam prontas para o formato novo. Escolhi duas APIs, uma para ser a principal e outra como fallback. Um detalhe importante é que a API principal utiliza os dados da Receita que são atualizados mensalmente. Isso significa que uma empresa aberta recentemente pode não estar lá, por isso um "não encontrado" da API principal é sempre confirmado no fallback antes de bloquear o cadastro.
+
+## 4. Integração com terceiros pede cautela
+
+Se você constrói um fluxo que depende de uma API de terceiros, você precisa estar ciente de que nem tudo são flores e que algo de errado pode acontecer, e isso não deve respingar no seu sistema e nem afetar a usabilidade do usuário. Aqui estão algumas coisas que você pode implementar para tornar a integração com serviços de terceiros mais segura:
+
+- **Timeout com AbortController:** defina um timeout para a API. O AbortController vai cancelar a requisição automaticamente, dessa forma você evita que o usuário fique esperando mais do que é necessário.
+- **Sem retry:** se a API principal falhou, não faça retry, vá para o fallback.
+- **Circuit breaker simples:** depois de 3 falhas seguidas na API principal, o provedor é alterado (fallback) por um período de tempo curto.
+- **Desconfie sempre da resposta:** defina limite do tamanho do retorno, desligue o redirect, normalize a resposta, etc.
+- **Feature flag:** utilize feature flags para, a qualquer momento, poder "desligar" essa implementação.
+- **Falha nos 2 provedores:** o cadastro segue, adiciona um log na aplicação e retorna algum feedback visual para o usuário. O mais importante é o sistema e o fluxo continuarem acontecendo.
+
+## 5. Entregar em partes pequenas
+
+Na era da inteligência artificial é muito comum PRs grandes. Defina um limite para as PRs, seu próprio agente consegue lidar com isso se a instrução for passada. A feature foi dividida em 4 PRs (2 para o frontend e 2 para o backend) que podem ser revisadas em poucos minutos, e cada PR tem no máximo 500 linhas de alterações:
+
+- PR (backend) #1: 8 arquivos, +212 -8
+- PR (backend) #2: 12 arquivos, +469 -10
+- PR (frontend) #3: 9 arquivos, +282 -7
+- PR (frontend) #4: 6 arquivos, +174 -86
