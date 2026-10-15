@@ -1,0 +1,62 @@
+---
+title: "The CNPJ now has letters. What now?"
+description: "Alphanumeric CNPJ: what breaks in the code, the check digit and validating it through an API"
+date: 2026-10-15
+tags: [javascript, cnpj, api]
+---
+
+## Introduction
+
+Since July 2026 the Receita Federal started issuing alphanumeric CNPJs. The format still has 14 positions, but the first 12 can have letters: 12.ABC.345/01DE-35 is a valid CNPJ. Numeric CNPJs are still valid, and the two formats will live side by side for many years.
+
+It looks like a small change. In practice, it breaks a lot of assumptions that have been spread across the code for decades. This week I adapted the company registration of the platform I work on, and I took the chance to validate the CNPJ directly against the public database of the Receita. Here I share what I learned.
+
+## 1. What breaks when the CNPJ stops being a number
+
+Before writing any code, I mapped out where the CNPJ showed up. The database was the good news: the column was already text, so I did not need a migration. The problem was in the layers above it: input masks that only accepted digits, validation libraries that do not accept the new format, and silent normalizations like `cnpj.replace(/\D/g, '')`. This does not throw any error, it wipes out the letters and the CNPJ reaches the database cut short without anyone noticing.
+
+## 2. The check digit is still modulo 11, with one detail
+
+### The calculation with ASCII minus 48
+
+The algorithm is the same as always. The only difference is the value of each character: its ASCII code minus 48. This way, '0' to '9' are still worth 0 to 9, and 'A' is now worth 17.
+
+```js
+const calculateDv = (base, weights) => {
+  const sum = weights.reduce(
+    (acc, weight, index) => acc + (base.charCodeAt(index) - 48) * weight,
+    0
+  )
+  const rest = sum % 11
+
+  return rest < 2 ? 0 : 11 - rest
+}
+```
+
+### Format and legacy records
+
+The 2 check digits are still always numeric. The format regex becomes `^[A-Z0-9]{12}\d{2}$`, always after normalizing: removing the punctuation and turning it into uppercase. An important decision was not to validate again the CNPJ of old records when it does not change during an edit. Legacy systems often have invalid CNPJs in the database, and blocking the edit of those records would create a problem that did not exist before.
+
+## 3. Validating through an API
+
+Besides the format, the task asked to confirm that the company exists and is ACTIVE in the Receita. I tested six public lookup APIs with a numeric CNPJ and an alphanumeric one, and all of them handled the numeric one well. With the alphanumeric one, some answered with a clean 404, others returned a 500 or 503 error. In other words, they were not ready for the new format yet. I picked two APIs, one to be the main one and another one as a fallback. An important detail is that the main API uses data from the Receita that is updated monthly. This means that a recently opened company might not be there yet, so a "not found" from the main API is always confirmed in the fallback before blocking the registration.
+
+## 4. Integrating with third parties calls for caution
+
+If you build a flow that depends on a third party API, you need to be aware that it is not all sunshine and that something can go wrong, and this should not spill over into your system or hurt the user experience. Here are some things you can implement to make the integration with third party services safer:
+
+- **Timeout with AbortController:** set a timeout for the API. The AbortController will cancel the request automatically, so you avoid leaving the user waiting longer than needed.
+- **No retry:** if the main API failed, do not retry, go to the fallback.
+- **Simple circuit breaker:** after 3 failures in a row on the main API, the provider is switched (fallback) for a short period of time.
+- **Always distrust the response:** set a limit on the size of the response, turn off redirects, normalize the response, and so on.
+- **Feature flag:** use feature flags so you can "turn off" this implementation at any moment.
+- **Both providers fail:** the registration goes on, a log is added in the application and some visual feedback is shown to the user. The most important thing is that the system and the flow keep working.
+
+## 5. Delivering in small pieces
+
+In the age of artificial intelligence, big PRs are very common. Set a limit for PRs, your own agent can handle that if you give it the instruction. The feature was split into 4 PRs (2 for the frontend and 2 for the backend) that can be reviewed in a few minutes, and each PR has at most 500 lines of changes:
+
+- PR (backend) #1: 8 files, +212 -8
+- PR (backend) #2: 12 files, +469 -10
+- PR (frontend) #3: 9 files, +282 -7
+- PR (frontend) #4: 6 files, +174 -86
