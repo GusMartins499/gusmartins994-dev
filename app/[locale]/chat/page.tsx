@@ -5,7 +5,7 @@ import { isLocale, type Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 import { SectionHeading } from "@/components/section";
 import { Terminal } from "@/components/chat/terminal";
-import { site } from "@/lib/site";
+import { alternatesFor } from "@/lib/seo";
 
 export async function generateMetadata({
   params,
@@ -16,9 +16,9 @@ export async function generateMetadata({
   if (!isLocale(locale)) return {};
   const dict = getDictionary(locale);
   return {
-    title: `${dict.chat.title} — ${site.name}`,
+    title: dict.chat.title,
     description: dict.chat.subtitle,
-    alternates: { canonical: `${site.url}/${locale}/chat` },
+    alternates: alternatesFor(locale, "/chat"),
   };
 }
 

@@ -104,10 +104,6 @@ test.describe("metadados das páginas", () => {
       const path = `/${locale}${route}`;
 
       test(`${path}: lang, título, canonical e hreflang`, async ({ page }) => {
-        // BUG conhecido: o /chat não usa o alternatesFor (sai sem hreflang)
-        // e põe o nome no título que o template do layout já acrescenta.
-        // Quando a correção entrar este teste passa e o test.fail() acusa.
-        test.fail(route === "/chat");
         await page.goto(path);
         const head = await headOf(page);
 
@@ -128,10 +124,6 @@ test.describe("metadados das páginas", () => {
       const path = `/${locale}${route}`;
 
       test(`${path}: imagens de compartilhamento`, async ({ page, request }) => {
-        // BUG conhecido: o `openGraph` destas páginas substitui o do layout
-        // inteiro e leva junto a imagem. Quando a correção entrar este teste
-        // passa e o test.fail() acusa.
-        test.fail(route === "/projects" || route === "/notes");
         await page.goto(path);
         const head = await headOf(page);
 
