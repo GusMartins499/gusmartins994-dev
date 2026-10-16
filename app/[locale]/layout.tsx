@@ -15,6 +15,7 @@ import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { FloatingNav } from "@/components/floating-nav";
 import { PageTransition } from "@/components/page-transition";
+import { GlyphRain } from "@/components/glyph-rain";
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
@@ -151,6 +152,7 @@ export default async function LocaleLayout({
       </head>
       <body className="min-h-dvh bg-base-100 text-base-content antialiased">
         <ThemeSync />
+        <GlyphRain />
         <a href="#conteudo" className="skip-link">
           {dict.a11y.skip}
         </a>

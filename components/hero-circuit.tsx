@@ -56,7 +56,7 @@ function Panel({ side }: { side: "left" | "right" }) {
       className={`hero-circuit ${
         side === "left"
           ? "right-full mr-8 justify-end"
-          : "left-full ml-8 justify-start"
+          : "hero-circuit-right left-full ml-8 justify-start"
       }`}
       aria-hidden="true"
     >
