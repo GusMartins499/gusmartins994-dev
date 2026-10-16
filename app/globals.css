@@ -228,6 +228,60 @@ body {
   isolation: isolate;
 }
 
+/* ── Chuva de caracteres (componente GlyphRain) ─────────────────────── */
+
+/* Canvas fixo nas margens, no mesmo andar do traçado da hero (-1), acima da
+   grade (-2). Vem antes no DOM, então a clareira do `.hero-circuit` pinta por
+   cima dele também — onde o traçado está, a chuva não aparece.
+
+   A cabeça de cada coluna leva o vermelho, o rastro é a cor do texto quase
+   apagada. O alfa é o teto: o rastro só desce a partir dele. */
+
+[data-theme="dark"] {
+  --rain: #ece7df;
+  --rain-head: #ef4136;
+  --rain-alpha: 0.16;
+}
+[data-theme="light"] {
+  --rain: #1a1a1a;
+  --rain-head: #b4341f;
+  --rain-alpha: 0.13;
+}
+
+.glyph-rain {
+  display: none;
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  pointer-events: none;
+  /* A clareira central: o JS já pula as colunas de dentro, a máscara só
+     desvanece as que ficam na borda. */
+  -webkit-mask-image: linear-gradient(
+    to right,
+    #000 calc(50% - 36rem),
+    transparent calc(50% - 27rem),
+    transparent calc(50% + 27rem),
+    #000 calc(50% + 36rem)
+  );
+  mask-image: linear-gradient(
+    to right,
+    #000 calc(50% - 36rem),
+    transparent calc(50% - 27rem),
+    transparent calc(50% + 27rem),
+    #000 calc(50% + 36rem)
+  );
+}
+
+@media (width >= 64rem) {
+  .glyph-rain { display: block; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glyph-rain { display: none; }
+}
+
 /* ── Traçado da hero (componente HeroCircuit) ───────────────────────── */
 
 /* Vive só nas margens laterais, que é espaço que a medida de leitura
@@ -257,49 +311,107 @@ body {
   /* A clareira: apaga a grade localmente pintando o fundo da página por
      cima dela (a grade é z-index -2, isto é -1). É o que a Woovi tem de
      graça — lá o esquemático mora em navy liso. Sem isso, traço e grade
-     são a mesma espécie visual e o olho não separa figura de fundo. */
-  background: radial-gradient(
-    130% 82% at 50% 50%,
-    var(--color-base-100) 48%,
-    transparent 100%
-  );
-  -webkit-mask-image: linear-gradient(
-    to right,
-    transparent,
-    #000 30%,
-    #000 70%,
-    transparent
-  );
-  mask-image: linear-gradient(
-    to right,
-    transparent,
-    #000 30%,
-    #000 70%,
-    transparent
-  );
+     são a mesma espécie visual e o olho não separa figura de fundo.
+
+     A clareira é uma nuvem, não uma figura: cinco elipses de tamanhos e
+     centros diferentes empilhadas no `::before`, cada uma com queda em sino
+     (sem platô, cede já perto do centro). Onde elas se sobrepõem o fundo
+     fecha mais; nas pontas sobra o contorno irregular de uma só. Já houve
+     um retângulo (radial cortado pelas bordas), uma elipse alta (lados
+     quase retos) e um círculo (geométrico demais) — com a grade toda em
+     linhas retas, qualquer contorno regular o olho lê como forma.
+
+     Toda elipse cabe dentro do painel (centro ± raio entre 0 e 100%), então
+     nenhuma é cortada em linha reta pela borda. Mistura com `transparent`
+     via color-mix pra interpolar só o alfa. O lado direito tem a sua
+     própria nuvem, pra as duas margens não serem simétricas. */
+}
+.hero-circuit::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  /* atrás do svg, mas dentro do painel (que já é um stacking context) */
+  z-index: -1;
+  --fog: var(--color-base-100);
+  background:
+    radial-gradient(
+      ellipse 42% 30% at 52% 46%,
+      var(--fog) 0%,
+      color-mix(in srgb, var(--fog) 85%, transparent) 30%,
+      color-mix(in srgb, var(--fog) 50%, transparent) 60%,
+      color-mix(in srgb, var(--fog) 15%, transparent) 85%,
+      transparent 100%
+    ),
+    radial-gradient(
+      ellipse 30% 22% at 36% 66%,
+      color-mix(in srgb, var(--fog) 75%, transparent) 0%,
+      color-mix(in srgb, var(--fog) 45%, transparent) 50%,
+      transparent 100%
+    ),
+    radial-gradient(
+      ellipse 26% 17% at 66% 27%,
+      color-mix(in srgb, var(--fog) 70%, transparent) 0%,
+      color-mix(in srgb, var(--fog) 40%, transparent) 50%,
+      transparent 100%
+    ),
+    radial-gradient(
+      ellipse 18% 13% at 28% 33%,
+      color-mix(in srgb, var(--fog) 55%, transparent) 0%,
+      color-mix(in srgb, var(--fog) 30%, transparent) 50%,
+      transparent 100%
+    ),
+    radial-gradient(
+      ellipse 16% 12% at 72% 74%,
+      color-mix(in srgb, var(--fog) 50%, transparent) 0%,
+      color-mix(in srgb, var(--fog) 25%, transparent) 50%,
+      transparent 100%
+    );
+}
+/* O lado direito tem nuvem própria, não o espelho da esquerda: outro
+   número de manchas, outros tamanhos, outro centro de gravidade. */
+.hero-circuit-right::before {
+  background:
+    radial-gradient(
+      ellipse 36% 34% at 44% 54%,
+      var(--fog) 0%,
+      color-mix(in srgb, var(--fog) 85%, transparent) 30%,
+      color-mix(in srgb, var(--fog) 50%, transparent) 60%,
+      color-mix(in srgb, var(--fog) 15%, transparent) 85%,
+      transparent 100%
+    ),
+    radial-gradient(
+      ellipse 34% 15% at 58% 30%,
+      color-mix(in srgb, var(--fog) 70%, transparent) 0%,
+      color-mix(in srgb, var(--fog) 40%, transparent) 50%,
+      transparent 100%
+    ),
+    radial-gradient(
+      ellipse 22% 20% at 30% 78%,
+      color-mix(in srgb, var(--fog) 60%, transparent) 0%,
+      color-mix(in srgb, var(--fog) 30%, transparent) 50%,
+      transparent 100%
+    ),
+    radial-gradient(
+      ellipse 14% 18% at 76% 62%,
+      color-mix(in srgb, var(--fog) 50%, transparent) 0%,
+      color-mix(in srgb, var(--fog) 25%, transparent) 50%,
+      transparent 100%
+    );
 }
 
 @media (width >= 64rem) {
   .hero-circuit { display: flex; }
 }
 
-/* Máscara vertical no próprio svg: duas máscaras em elementos diferentes
-   evita depender de mask-composite. */
+/* O traçado some numa elipse do tamanho do próprio svg: nas pontas de cima
+   e de baixo e também nas laterais, sem faixa reta em lado nenhum. */
 .hero-circuit-svg {
-  -webkit-mask-image: linear-gradient(
-    to bottom,
-    transparent,
-    #000 22%,
-    #000 78%,
-    transparent
+  -webkit-mask-image: radial-gradient(
+    closest-side,
+    #000 55%,
+    transparent 100%
   );
-  mask-image: linear-gradient(
-    to bottom,
-    transparent,
-    #000 22%,
-    #000 78%,
-    transparent
-  );
+  mask-image: radial-gradient(closest-side, #000 55%, transparent 100%);
 }
 
 /* O pulso: um risco de 40 unidades num padrão de 1200 sobre um caminho
