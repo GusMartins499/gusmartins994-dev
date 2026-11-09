@@ -1,0 +1,68 @@
+---
+title: "Como transformei os encontros de um grupo de apoio à adoção em posts sem expor ninguém"
+description: "airgap-scribe: transcrição e anonimização rodando localmente, num container sem rede, antes de qualquer texto sair da máquina"
+date: 2026-11-09
+tags: [whisper, docker, privacidade, ia]
+---
+
+## Como tudo começou
+
+Há algumas semanas percebi que podia começar um projeto para contribuir de verdade com um grupo do qual participo, um grupo de apoio à adoção. Os encontros são uma vez por mês, e temos um grupo no WhatsApp com 175 pessoas de Tubarão-SC e região, além de algumas de fora do estado. Notei que nem todo mundo consegue ir aos encontros, principalmente quem mora longe. Daí veio a ideia: por que não criar um site para o grupo e publicar, em formato de blog, o que conversamos no último encontro?
+
+## Os desafios
+
+Logo apareceram alguns desafios. O primeiro é que algumas histórias contadas lá são pessoais e envolvem nomes, cidades e outras informações sensíveis. Eu não podia simplesmente publicar isso na internet sem o consentimento de ninguém. Além disso, eu não teria como resumir e escrever um rascunho em tempo real durante o encontro para depois publicar no site.
+
+Minha ideia era gravar os encontros e transcrever, mas o problema das informações sensíveis continuava. Pensei então em usar IA para remover essas informações. Só que eu também não podia pegar o áudio do encontro e mandar para um provedor como a Anthropic, a OpenAI ou outro qualquer.
+
+Como o grupo é uma organização sem fins lucrativos, investir dinheiro também era complicado, então eu tinha que dar um jeito de resolver isso. Decidi rodar localmente, na minha máquina, um modelo do Whisper junto com uma etapa de anonimização. A ideia era até simples: criar uma aplicação que roda no Docker sem acesso à internet, para que nenhum serviço de terceiros receba o áudio ou uma transcrição com informação sensível. Foi assim que nasceu o airgap-scribe.
+
+<Fig src="airgap-scribe.png" alt="Diagrama do airgap-scribe: a gravação vai do celular pelo Syncthing para um container sem rede com Whisper, spaCy e os marcadores; só o texto anonimizado vai para o Claude, sem ferramentas, e uma pessoa revisa a PR" />
+
+## Rodando sem internet
+
+Antes de rodar o projeto no Docker, é preciso baixar o modelo do Whisper. Como o container roda sem rede, ele não tem rota de saída nem DNS, então não tem como baixar nada lá dentro. E é justamente isso que garante que o áudio não sai da máquina: não é uma questão de confiar que nenhuma biblioteca vai mandar dados para fora, é que não existe caminho para isso acontecer.
+
+## Do celular para o servidor
+
+Tenho um servidor pessoal, que na verdade é um notebook velho. Nele uso o Syncthing, e isso ajudou muito: alguns minutos depois que a conversa termina, eu mando o áudio do celular para uma pasta compartilhada, sincronizada pela minha tailnet, e a transcrição já começa sozinha.
+
+Também configurei um serviço chamado ntfy para receber notificações no celular. Quando o rascunho fica pronto, chega um aviso com o link da prévia do site e o link do pull request. Se alguma coisa der errado, chega um aviso de prioridade alta dizendo em qual etapa falhou.
+
+## Tirando os nomes
+
+Depois da transcrição, ainda dentro do container sem rede, entra a anonimização. Uso o spaCy para encontrar nomes de pessoas e lugares e trocar por marcadores como `[PERSON_1]` e `[LOCATION_1]`. A mesma pessoa sempre recebe o mesmo marcador, então o texto continua fazendo sentido. E se alguém é chamado só pelo primeiro nome mais para frente na conversa, esse nome também é trocado.
+
+## Onde a IA entra
+
+Só nesse momento alguma coisa sai da máquina, e é só o texto já anonimizado. Ele vai para o Claude, que escreve o rascunho do post. O Claude roda com todas as ferramentas desligadas: não lê arquivos, não roda comandos e não acessa nada além do texto que eu mando. Uso um prompt diferente para cada tipo de encontro, já que uma palestra e uma roda de conversa pedem textos diferentes.
+
+## Conferindo de novo
+
+Reconhecimento de nomes erra, principalmente em transcrição de fala, em que o mesmo nome pode aparecer escrito de vários jeitos. Por isso, quando o rascunho volta, ele passa por uma segunda verificação, também sem rede. Ela procura no texto os nomes que foram detectados, nomes comuns de uma lista e marcadores que sobraram. O que ela encontrar vira um alerta.
+
+Para ter certeza de que isso funciona, os testes geram mais de 200 transcrições falsas com nomes conhecidos e erros típicos de transcrição. O CI só passa se todos os nomes forem removidos ou sinalizados. Nenhum áudio ou transcrição real entra no repositório.
+
+## Uma pessoa sempre revisa
+
+Nada é publicado automaticamente. O rascunho vira um pull request no repositório do site, com os alertas na descrição e uma prévia publicada para eu ler como vai ficar. Só depois de revisar e aprovar o texto vai para o ar. E se alguém do grupo quiser corrigir ou tirar um texto, é só pedir pelo WhatsApp.
+
+## Hoje é o primeiro teste de verdade
+
+Até agora o airgap-scribe só processou transcrições falsas, criadas para os testes. Hoje vai ser a primeira vez que ele recebe a gravação de um encontro de verdade do grupo. Vou ver se a transcrição entende bem as falas, se algum nome escapa da anonimização e se o rascunho fica bom o suficiente para virar um post depois da revisão.
+
+E falando em post, ainda falta contar a outra metade dessa história: o site onde esses textos vão ser publicados. Como ele foi construído, onde está hospedado sem custo para o grupo e como cada rascunho ganha uma prévia antes de ir para o ar. Isso fica para o próximo post.
+
+## Ferramentas usadas
+
+Todas as ferramentas que rodam no meu servidor são open source:
+
+- [airgap-scribe](https://github.com/GusMartins499/airgap-scribe): o projeto deste post
+- [Whisper](https://github.com/openai/whisper): o modelo de transcrição da OpenAI, que roda localmente
+- [whisper.cpp](https://github.com/ggml-org/whisper.cpp): roda o Whisper na CPU, sem precisar de placa de vídeo
+- [FFmpeg](https://ffmpeg.org): prepara o áudio para a transcrição
+- [spaCy](https://spacy.io): encontra nomes de pessoas e lugares no texto
+- [Docker Engine](https://docs.docker.com/engine/): roda tudo isso num container sem rede
+- [Syncthing](https://syncthing.net): sincroniza o áudio do celular com o servidor
+- [Tailscale](https://tailscale.com): a rede privada entre o celular e o servidor
+- [ntfy](https://ntfy.sh): as notificações no celular
