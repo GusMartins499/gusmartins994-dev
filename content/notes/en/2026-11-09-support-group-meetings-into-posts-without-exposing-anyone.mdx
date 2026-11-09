@@ -17,7 +17,7 @@ My idea was to record the meetings and transcribe them, but the problem of the s
 
 Since the group is a nonprofit organization, spending money was also complicated, so I had to find a way to solve this. I decided to run, locally on my machine, a Whisper model together with an anonymization step. The idea was actually simple: create an application that runs in Docker without internet access, so that no third-party service receives the audio or a transcription with sensitive information. That is how airgap-scribe was born.
 
-<Fig src="airgap-scribe-en.png" alt="Diagram of airgap-scribe: the recording goes from the phone through Syncthing to a container with no network running Whisper, spaCy and the markers; only the anonymized text goes to Claude, with no tools, and a person reviews the PR" />
+<Fig src="airgap-scribe.png" alt="Diagram of airgap-scribe: the recording goes from the phone through Syncthing to a container with no network running Whisper, spaCy and the markers; only the anonymized text goes to Claude, with no tools, and a person reviews the PR" />
 
 ## Running without internet
 
