@@ -1,0 +1,84 @@
+---
+title: "O site do grupo: publicando sem custo de hospedagem, com prévia protegida e sem rastrear ninguém"
+description: "Site estático com Astro no Cloudflare Pages, configuração em Terraform, prévia protegida em cada pull request e nenhum rastreamento de quem visita"
+date: 2026-11-11
+tags: [astro, cloudflare, terraform, privacidade]
+---
+
+## Onde paramos
+
+No [post anterior](/pt/notes/support-group-meetings-into-posts-without-exposing-anyone) contei como o airgap-scribe transforma a gravação de um encontro do grupo de apoio à adoção num rascunho anonimizado, sem que o áudio saia da minha máquina. Ficou faltando a outra metade: o site onde esses textos são publicados. Neste post conto como ele foi construído, onde está hospedado sem pagar hospedagem e como cada rascunho ganha uma prévia antes de ir para o ar.
+
+## Um site simples de propósito
+
+O site é estático, feito com Astro. Não tem banco de dados, servidor nem painel administrativo. Cada encontro vira um arquivo markdown dentro do repositório, e é exatamente esse arquivo que o airgap-scribe gera.
+
+Para o site não quebrar por causa de um rascunho mal formatado, todo post precisa seguir um schema validado com Zod: título, resumo, data e o tipo de encontro, que pode ser palestra ou roda de conversa. Se faltar algum campo, o build falha antes de qualquer coisa ir para o ar.
+
+A página inicial mostra quando é o próximo encontro, com horário e local. Tem também um botão para quem quer participar, que abre o WhatsApp com uma mensagem pronta. E, se alguém encontrar um erro num texto ou preferir que ele saia do site, cada post tem um botão para pedir a correção ou a remoção.
+
+## Hospedagem sem custo
+
+O site está no Cloudflare Pages, no plano gratuito. O build não roda na Cloudflare: o GitHub Actions roda os testes, gera o site e envia o resultado pronto com o `wrangler pages deploy`.
+
+Toda a configuração da Cloudflare fica em Terraform: o projeto no Pages, o domínio, o DNS, o redirecionamento do www, a proteção das prévias e o bloqueio de robôs de IA. O estado do Terraform fica guardado num bucket do R2, na própria conta do grupo. Assim, se eu precisar recriar tudo ou outra pessoa assumir o projeto, a configuração está toda escrita e versionada, e não espalhada em cliques num painel.
+
+Também separei os tokens. O token que o GitHub Actions usa só consegue publicar no Pages. O token do Terraform, que mexe no domínio, no DNS e no Zero Trust, fica guardado no Vaultwarden do meu servidor e não fica salvo em nenhum outro lugar.
+
+## Toda mudança passa por um pull request
+
+Nada vai para o site sem passar por um pull request, seja um post novo, seja uma mudança no layout. Em cada PR o GitHub Actions roda os testes com Vitest, gera o site e publica uma prévia num endereço só daquela branch. Depois deixa um comentário na PR com o link da prévia. Esse comentário é sempre o mesmo, só atualizado a cada push, então a PR não fica cheia de comentários repetidos.
+
+É esse link que chega no meu celular pelo ntfy quando o airgap-scribe termina um rascunho. E, como contei na parte 1, as prévias ficam protegidas pelo Zero Trust da Cloudflare: só o meu e-mail consegue abrir. Quem tentar acessar o link cai primeiro numa tela de login, então o rascunho nunca é servido para quem não tem acesso, nem para buscadores. O site em produção continua aberto para todo mundo.
+
+PRs vindas de fork e do Dependabot não recebem os segredos do repositório, então rodam os testes mas não publicam nada. O Dependabot abre PRs toda semana para atualizar as dependências do npm, as actions do GitHub e o provider do Terraform.
+
+## Privacidade também no site
+
+Não fazia sentido cuidar tanto dos dados no airgap-scribe e depois rastrear quem visita o site. Por isso:
+
+- **Sem cookies e sem scripts de terceiros:** a Content Security Policy só deixa carregar script, estilo, fonte e imagem do próprio site. Se um dia eu quiser colocar uma fonte do Google, por exemplo, ela precisa entrar na política, senão não carrega.
+- **Robôs de IA bloqueados:** o `robots.txt` pede para eles não coletarem o conteúdo, e a Cloudflare bloqueia na borda os que ignoram o pedido. Os buscadores, como o Google, continuam passando.
+- **Uma página de privacidade:** ela explica como os textos são feitos. Os encontros são gravados com o consentimento de quem participa, nomes de pessoas e lugares não são publicados e todo texto é revisado por uma pessoa.
+- **Pedido de correção em todo post:** no fim de cada post tem um link para pedir a correção ou a remoção daquele texto. Ele abre o WhatsApp com o título do post já escrito na mensagem.
+
+## Acessível para todo mundo
+
+O grupo tem pessoas de todas as idades, então também cuidei da acessibilidade: o contraste dos textos segue o nível AA da WCAG, o foco do teclado fica visível até nas seções escuras e o layout se ajusta quando alguém aumenta o zoom para 200% no celular.
+
+## Como foi o primeiro teste
+
+O fluxo funcionou de ponta a ponta. Logo depois que a palestra terminou, ativei o 5G, liguei o Tailscale no celular e movi o áudio para a pasta compartilhada do Syncthing. Quando a pasta apareceu como sincronizada, perguntei para o Claude se o áudio tinha chegado e se a transcrição já tinha começado, e ele me confirmou que sim.
+
+O áudio tinha 72 minutos. Com 6 vCPUs e o áudio dividido em blocos de 5 minutos, a transcrição levou 45 minutos. Acredito que dá para melhorar, e esse vai ser o meu próximo objetivo.
+
+Foi muito gratificante receber a notificação do ntfy com o link da prévia e o link do pull request. A notificação também mostrava 4 alertas para revisar, e no fim todos eram falsos positivos.
+
+## Conheça o site
+
+<LinkCard href="https://filhosparasempre.org.br/" title="Filhos para Sempre" description="Encontros mensais, gratuitos e abertos a todos que se interessam por adoção, toda 2ª segunda-feira do mês em Tubarão." />
+
+Lá você encontra quando é o próximo encontro, como participar e, a partir de agora, os textos dos encontros. Dá uma lida no que foi conversado no encontro do dia 09/11/2026 e depois me conta o que você achou.
+
+## Ferramentas usadas
+
+Open source:
+
+- [Astro](https://astro.build): gera o site estático
+- [Zod](https://zod.dev): valida o formato de cada post
+- [Vitest](https://vitest.dev): os testes
+- [Wrangler](https://developers.cloudflare.com/workers/wrangler/): publica o site no Cloudflare Pages
+- [Vaultwarden](https://github.com/dani-garcia/vaultwarden): guarda os tokens e senhas do projeto
+- [Syncthing](https://syncthing.net): sincroniza o áudio do celular com o servidor
+- [ntfy](https://ntfy.sh): as notificações no celular
+
+Serviços, todos no plano gratuito:
+
+- [Cloudflare Pages](https://pages.cloudflare.com): hospedagem do site e das prévias
+- [Cloudflare Zero Trust](https://www.cloudflare.com/zero-trust/): protege as prévias
+- [Cloudflare R2](https://www.cloudflare.com/developer-platform/products/r2/): guarda o estado do Terraform
+- [GitHub Actions](https://github.com/features/actions) e [Dependabot](https://docs.github.com/en/code-security/dependabot): CI e atualização das dependências
+
+Infraestrutura como código:
+
+- [Terraform](https://developer.hashicorp.com/terraform): toda a configuração da Cloudflare

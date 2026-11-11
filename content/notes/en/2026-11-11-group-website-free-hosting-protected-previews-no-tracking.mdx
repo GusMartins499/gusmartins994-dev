@@ -1,0 +1,84 @@
+---
+title: "The group website: publishing with no hosting cost, with a protected preview and without tracking anyone"
+description: "A static website with Astro on Cloudflare Pages, configuration in Terraform, a protected preview on every pull request and no tracking of anyone who visits"
+date: 2026-11-11
+tags: [astro, cloudflare, terraform, privacy]
+---
+
+## Where we left off
+
+In the [previous post](/en/notes/support-group-meetings-into-posts-without-exposing-anyone) I told how airgap-scribe turns the recording of a meeting of the adoption support group into an anonymized draft, without the audio leaving my machine. The other half was still missing: the website where these texts are published. In this post I tell how it was built, where it is hosted without paying for hosting and how each draft gets a preview before going live.
+
+## A simple website on purpose
+
+The website is static, made with Astro. It has no database, no server and no admin panel. Each meeting becomes a markdown file inside the repository, and that is exactly the file that airgap-scribe generates.
+
+So that the website does not break because of a badly formatted draft, every post needs to follow a schema validated with Zod: title, summary, date and the type of meeting, which can be a talk or a group conversation. If any field is missing, the build fails before anything goes live.
+
+The home page shows when the next meeting is, with the time and the place. There is also a button for anyone who wants to take part, which opens WhatsApp with a ready message. And if someone finds a mistake in a text or would rather have it taken off the website, each post has a button to ask for the fix or the removal.
+
+## Hosting with no cost
+
+The website is on Cloudflare Pages, on the free plan. The build does not run on Cloudflare: GitHub Actions runs the tests, generates the website and sends the finished result with `wrangler pages deploy`.
+
+All the Cloudflare configuration is in Terraform: the Pages project, the domain, the DNS, the www redirect, the protection of the previews and the blocking of AI bots. The Terraform state is stored in an R2 bucket, in the group's own account. This way, if I need to create everything again or another person takes over the project, the configuration is all written and versioned, and not spread across clicks in a dashboard.
+
+I also kept the tokens separate. The token that GitHub Actions uses can only publish to Pages. The Terraform token, which changes the domain, the DNS and Zero Trust, is stored in the Vaultwarden on my server and is not saved anywhere else.
+
+## Every change goes through a pull request
+
+Nothing goes to the website without going through a pull request, whether it is a new post or a change in the layout. On each PR, GitHub Actions runs the tests with Vitest, generates the website and publishes a preview at an address just for that branch. Then it leaves a comment on the PR with the link to the preview. This comment is always the same one, only updated on each push, so the PR does not fill up with repeated comments.
+
+That is the link that reaches my phone through ntfy when airgap-scribe finishes a draft. And, as I told in part 1, the previews are protected by Cloudflare Zero Trust: only my email can open them. Anyone who tries to access the link first lands on a login screen, so the draft is never served to anyone without access, and not to search engines either. The website in production is still open to everyone.
+
+PRs coming from forks and from Dependabot do not get the repository secrets, so they run the tests but do not publish anything. Dependabot opens PRs every week to update the npm dependencies, the GitHub actions and the Terraform provider.
+
+## Privacy on the website too
+
+It did not make sense to take so much care of the data in airgap-scribe and then track who visits the website. That is why:
+
+- **No cookies and no third-party scripts:** the Content Security Policy only lets the website load scripts, styles, fonts and images from the website itself. If one day I want to add a Google font, for example, it needs to be added to the policy, or it will not load.
+- **AI bots blocked:** the `robots.txt` asks them not to collect the content, and Cloudflare blocks at the edge the ones that ignore the request. Search engines, like Google, still get through.
+- **A privacy page:** it explains how the texts are made. The meetings are recorded with the consent of the people who take part, names of people and places are not published and every text is reviewed by a person.
+- **A request for a fix on every post:** at the end of each post there is a link to ask for the fix or the removal of that text. It opens WhatsApp with the title of the post already written in the message.
+
+## Accessible to everyone
+
+The group has people of all ages, so I also took care of accessibility: the contrast of the texts follows the WCAG AA level, the keyboard focus is visible even in the dark sections and the layout adjusts when someone zooms in to 200% on the phone.
+
+## How the first test went
+
+The flow worked from start to finish. Right after the talk ended, I turned on 5G, turned on Tailscale on my phone and moved the audio to the shared Syncthing folder. When the folder showed up as synced, I asked Claude if the audio had arrived and if the transcription had already started, and it confirmed that it had.
+
+The audio was 72 minutes long. With 6 vCPUs and the audio split into blocks of 5 minutes, the transcription took 45 minutes. I believe it can be improved, and that will be my next goal.
+
+It was very rewarding to get the ntfy notification with the link to the preview and the link to the pull request. The notification also showed 4 warnings to review, and in the end all of them were false positives.
+
+## Get to know the website
+
+<LinkCard href="https://filhosparasempre.org.br/" title="Filhos para Sempre" description="Monthly meetings, free and open to everyone interested in adoption, every 2nd Monday of the month in Tubarão." />
+
+There you can find when the next meeting is, how to take part and, from now on, the texts of the meetings. Take a read of what was talked about in the meeting on November 9, 2026, and then tell me what you thought.
+
+## Tools used
+
+Open source:
+
+- [Astro](https://astro.build): generates the static website
+- [Zod](https://zod.dev): validates the format of each post
+- [Vitest](https://vitest.dev): the tests
+- [Wrangler](https://developers.cloudflare.com/workers/wrangler/): publishes the website to Cloudflare Pages
+- [Vaultwarden](https://github.com/dani-garcia/vaultwarden): stores the tokens and passwords of the project
+- [Syncthing](https://syncthing.net): syncs the audio from the phone with the server
+- [ntfy](https://ntfy.sh): the notifications on the phone
+
+Services, all on the free plan:
+
+- [Cloudflare Pages](https://pages.cloudflare.com): hosting for the website and the previews
+- [Cloudflare Zero Trust](https://www.cloudflare.com/zero-trust/): protects the previews
+- [Cloudflare R2](https://www.cloudflare.com/developer-platform/products/r2/): stores the Terraform state
+- [GitHub Actions](https://github.com/features/actions) and [Dependabot](https://docs.github.com/en/code-security/dependabot): CI and dependency updates
+
+Infrastructure as code:
+
+- [Terraform](https://developer.hashicorp.com/terraform): all the Cloudflare configuration
