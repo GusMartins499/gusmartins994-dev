@@ -2,6 +2,7 @@ import type { MDXComponents } from "mdx/types";
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { Fig } from "@/components/fig";
+import { LinkCard } from "@/components/link-card";
 import { HeadingAnchor } from "@/components/heading-anchor";
 import { slugify } from "@/lib/notes";
 import type { Dictionary } from "@/i18n/dictionaries";
@@ -105,5 +106,6 @@ export function getMdxComponents(dict: Dictionary): MDXComponents {
     hr: () => <hr className="my-8 border-base-300" />,
     // Componente pra imagens otimizadas (next/image) usado direto no MDX.
     Fig,
+    LinkCard,
   };
 }
